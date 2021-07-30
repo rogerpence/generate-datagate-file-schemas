@@ -62,7 +62,7 @@ BegClass GenFileDescription
             FileObj = AdgFactory.NewFile(db, Library + "/" + FileName)                        
 
             // Save XML to disk.
-            // FileObj.Definition.Save(XMLFileName) 
+            //FileObj.Definition.Save(XMLFileName) 
             
             Result = ReadFileDefinition(FileObj.Definition, DBName, Library, FileName)
         Catch dgEx Type( dgException )
@@ -165,8 +165,8 @@ BegClass GenFileDescription
                 DataType = FieldType.ChildNodes[ 0 ] *As XmlElement
                 // x = RegEx.Replace( DataType.Name, "Field$", String.Empty ) 
                 FldInfo.Type     = GetFieldDetails( DataType, *ByRef FldLength, *ByRef FldDecimals ) 
-                FldInfo.Length   = FldLength
-                FldInfo.Decimals = FldDecimals
+                FldInfo._Length   = FldLength
+                FldInfo._Decimals = FldDecimals
             EndIf
             
             // Get field text.

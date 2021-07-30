@@ -27,7 +27,7 @@ BegClass MainPgm Access(*Public)
         /*
             GenFileSchema <DBName> <Library> 
             GetFileSchema <DBName> <Library> <Filename>
-            */
+         */
 
         DclFld RootPath Type(*String) 
         DclFld TargetFolder Type(*String) 
@@ -137,6 +137,7 @@ BegClass CommandLineArgs Access(*Public)
 
     DclProp Pause Type(*Boolean)  Access(*Public) +
                          Attributes(CmdArg("--pause", "-p", *False, "Pause the screen after processing"))
+
                          
     BegConstructor Access(*Public) 
         *This.Pause = *False 

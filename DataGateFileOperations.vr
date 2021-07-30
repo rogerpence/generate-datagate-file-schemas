@@ -222,8 +222,8 @@ BegClass DataGateFileOperations Access(*Public)
                 DataType = FieldType.ChildNodes[ 0 ] *As XmlElement
                 // x = RegEx.Replace( DataType.Name, "Field$", String.Empty ) 
                 FldInfo.Type     = GetFieldDetails( DataType, *ByRef FldLength, *ByRef FldDecimals ) 
-                FldInfo.Length   = FldLength
-                FldInfo.Decimals = FldDecimals
+                FldInfo._Length   = FldLength
+                FldInfo._Decimals = FldDecimals
             EndIf
             
             // Get field text.

@@ -162,17 +162,17 @@ BegClass DataGateFile Access( *Public )
         EndGet
     EndProp 
 
-    BegProp prefixedkeyfieldslist  Access( *Public ) Type( *String ) 
-        BegGet        
-            DclFld sb Type( StringBuilder ) New( 64 ) 
-        
-            ForEach f Type( Field ) Collection( *This.Fields.KeyFields)
-                sb.Append( *This.Alias + "_" + f.Name.Trim().ToLower() + ", " ) 
-            EndFor 
-        
-            LeaveSr RegEx.Replace( sb.ToString(), ",\s*$", String.Empty ) 
-        EndGet
-    EndProp 
+//    BegProp prefixedkeyfieldslist  Access( *Public ) Type( *String ) 
+//        BegGet        
+//            DclFld sb Type( StringBuilder ) New( 64 ) 
+//        
+//            ForEach f Type( Field ) Collection( *This.Fields.KeyFields)
+//                sb.Append( *This.Alias + "_" + f.Name.Trim().ToLower() + ", " ) 
+//            EndFor 
+//        
+//            LeaveSr RegEx.Replace( sb.ToString(), ",\s*$", String.Empty ) 
+//        EndGet
+//    EndProp 
 
     BegProp allfieldslist  Access( *Public ) Type( *String ) 
         BegGet        
@@ -186,17 +186,17 @@ BegClass DataGateFile Access( *Public )
         EndGet
     EndProp 
 
-    BegProp allprefixedfieldslist  Access( *Public ) Type( *String ) 
-        BegGet        
-            DclFld sb Type( StringBuilder ) New( 64 ) 
-        
-            ForEach f Type( Field ) Collection( *This.Fields)
-                sb.Append( *this.Alias + "_" + f.Name.Trim().ToLower() + ", " ) 
-            EndFor 
-        
-            LeaveSr RegEx.Replace( sb.ToString(), ",\s*$", String.Empty ) 
-        EndGet
-    EndProp 
+//    BegProp allprefixedfieldslist  Access( *Public ) Type( *String ) 
+//        BegGet        
+//            DclFld sb Type( StringBuilder ) New( 64 ) 
+//        
+//            ForEach f Type( Field ) Collection( *This.Fields)
+//                sb.Append( *this.Alias + "_" + f.Name.Trim().ToLower() + ", " ) 
+//            EndFor 
+//        
+//            LeaveSr RegEx.Replace( sb.ToString(), ",\s*$", String.Empty ) 
+//        EndGet
+//    EndProp 
 
     DclFld _Fields Type( FieldCollection ) New()
     BegProp fields Type( FieldCollection )  Access( *Public )

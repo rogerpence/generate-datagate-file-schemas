@@ -18,8 +18,8 @@ BegClass Field Access(*Public)
         
         *This.Name         = Name   
         *This.Type         = Type        
-        *This.Length       = Length      
-        *This.Decimals     = Decimals    
+        *This._Length       = Length      
+        *This._Decimals     = Decimals    
         *This.Description  = Description.Trim() 
     EndConstructor                                   
     
@@ -89,16 +89,16 @@ BegClass Field Access(*Public)
         EndSet
     EndProp
 
-    BegProp trim Type(*String) Access(*Public) 
-        BegGet
-            If _Type.ToLower() = 'char' 
-                LeaveSr '.Trim()'
-            Else
-                LeaveSr ''
-            EndIf
-        EndGet
-    EndProp 
-
+//    BegProp trimmable Type(*Boolean) Access(*Public) 
+//        BegGet
+//            If _Type.ToLower() = 'char' 
+//                LeaveSr *True
+//            Else
+//                LeaveSr *False
+//            EndIf
+//        EndGet
+//    EndProp 
+//
     
     BegProp systemtype  Type( *String )  Access( *Public )
         BegGet
@@ -122,13 +122,13 @@ BegClass Field Access(*Public)
         If SqlDataTypes[DataTypeName] <> *Nothing
             Result = SqlDataTypes[ *This._Type.ToUpper() ].ToLower()
        
-            If ( Regex.Match( *This.Length, "\d{1,4}" ).Success ) 
+            If ( Regex.Match( *This._Length, "\d{1,4}" ).Success ) 
                 // If the length is greater than 9 digits and their are
                 // zero decimals, then convert to SQL Server bigint.
-                If ( Convert.ToInt32( *This.Length ) > 9 ) AND +
-                   ( NOT String.IsNullOrEmpty( *This.Decimals ) ) AND +
-                   ( *This.Decimals.Trim().Length > 0 ) AND + 
-                   ( Convert.ToInt32( *This.Decimals ) = 0 )
+                If ( Convert.ToInt32( *This._Length ) > 9 ) AND +
+                   ( NOT String.IsNullOrEmpty( *This._Decimals ) ) AND +
+                   ( *This._Decimals.Trim().Length > 0 ) AND + 
+                   ( Convert.ToInt32( *This._Decimals ) = 0 )
                
                    Result = "bigint" 
                 EndIf           
@@ -139,7 +139,7 @@ BegClass Field Access(*Public)
         LeaveSr Result    
     EndFunc
     
-    BegProp SqlServerType  Type( *String )  Access( *Public )
+    BegProp sqlservertype  Type( *String )  Access( *Public )
         BegGet
             DclFld SqlServerDataType Type( *String ) 
             
@@ -149,22 +149,22 @@ BegClass Field Access(*Public)
         EndGet
     EndProp
     
-    BegProp SqlServerTypeWithLength  Type( *String )  Access( *Public )
+    BegProp sqlservertypewithlength  Type( *String )  Access( *Public )
         BegGet
             DclFld SqlServerDataType Type( *String ) 
 
             SqlServerDataType = GetSqlServerType()
 
             If *This.Type.ToUpper() = "*CHAR" OR *This.Type.ToUpper() = "*STRING"
-                SqlServerDataType = String.Format(SqlServerDataType + '({0})', *This.Length.Trim()) 
-            ElseIf *This.Decimals.Trim() <> String.Empty  
-                SqlServerDataType = String.Format(SqlServerDataType + '({0},{1})', *This.Length.Trim(), *This.decimals.Trim()) 
+                SqlServerDataType = String.Format(SqlServerDataType + '({0})', *This._Length.Trim()) 
+            ElseIf *This._Decimals.Trim() <> String.Empty  
+                SqlServerDataType = String.Format(SqlServerDataType + '({0},{1})', *This._Length.Trim(), *This._decimals.Trim()) 
             EndIf
             LeaveSr SqlServerDataType
         EndGet
     EndProp
 
-    BegProp SqlServerNull Type( *String ) Access( *Public ) 
+    BegProp sqlservernull Type( *String ) Access( *Public ) 
         BegGet
             If ( *This.AllowNull ) 
                 LeaveSr "NULL"            
@@ -178,7 +178,7 @@ BegClass Field Access(*Public)
 
 
     DclFld  _AllowNull Type( *Boolean ) 
-    BegProp AllowNull Type( *Boolean ) Access( *Public )
+    BegProp allownull Type( *Boolean ) Access( *Public )
         BegGet
             LeaveSr _AllowNull
         EndGet
@@ -190,7 +190,7 @@ BegClass Field Access(*Public)
 
 
 // Start of keys    
-    BegProp IsKey Type( *Boolean ) Access( *Public ) 
+    BegProp iskey Type( *Boolean ) Access( *Public ) 
         BegGet    
             LeaveSr ( *This.KeyPosition > -1 )     
         EndGet       
@@ -218,63 +218,79 @@ BegClass Field Access(*Public)
 
             FieldType = *This.Type 
 
-            If      ( *This.Length.Trim() = String.Empty ) 
+            If      ( *This._Length.Trim() = String.Empty ) 
                 LeaveSr String.Format( TypeMask, FieldType ) 
 
-            ElseIf  ( *This.Decimals.Trim() = String.Empty ) 
-                LeaveSr String.Format( TypeMaskNoDecimals, FieldType, *This.Length.Trim() ) 
+            ElseIf  ( *This._Decimals.Trim() = String.Empty ) 
+                LeaveSr String.Format( TypeMaskNoDecimals, FieldType, *This._Length.Trim() ) 
             
             Else
-                LeaveSr String.Format( TypeMaskDecimals, FieldType, *This.Length.Trim(), *This.Decimals.Trim() ) 
+                LeaveSr String.Format( TypeMaskDecimals, FieldType, *This._Length.Trim(), *This._Decimals.Trim() ) 
             
             EndIf                
         EndGet
     EndProp
     
-    BegProp lengthdecimals Type( *String ) Access( *Public ) 
-        BegGet
-            //DclFld TypeMaskNoDecimals Type( *String )  Inz( "{1}" ) 
-            //DclFld TypeMaskDecimals   Type( *String )  Inz( "{1},{2}" )  
-        
-            If      ( *This.Length.Trim() = String.Empty ) 
-                LeaveSr String.Empty
-
-            ElseIf  ( *This.Decimals.Trim() = String.Empty ) 
-                LeaveSr *This.Length.Trim()  
-            
-            Else
-                LeaveSr *This.Length.Trim() + "," + *This.Decimals.Trim()  
-
-//            ElseIf  ( *This.Decimals.Trim() = String.Empty ) 
-//                LeaveSr String.Format( TypeMaskNoDecimals, *This.Length.Trim() ) 
+//    BegProp lengthdecimals Type( *String ) Access( *Private ) 
+//        BegGet
+//            //DclFld TypeMaskNoDecimals Type( *String )  Inz( "{1}" ) 
+//            //DclFld TypeMaskDecimals   Type( *String )  Inz( "{1},{2}" )  
+//        
+//            If      ( *This._Length.Trim() = String.Empty ) 
+//                LeaveSr String.Empty
+//
+//            ElseIf  ( *This._Decimals.Trim() = String.Empty ) 
+//                LeaveSr *This._Length.Trim()  
 //            
 //            Else
-//                LeaveSr String.Format( TypeMaskDecimals, *This.Length.Trim(), *This.Decimals.Trim() ) 
-            
-            EndIf                
+//                LeaveSr *This._Length.Trim() + "," + *This._Decimals.Trim()  
+//
+////            ElseIf  ( *This.Decimals.Trim() = String.Empty ) 
+////                LeaveSr String.Format( TypeMaskNoDecimals, *This.Length.Trim() ) 
+////            
+////            Else
+////                LeaveSr String.Format( TypeMaskDecimals, *This.Length.Trim(), *This.Decimals.Trim() ) 
+//            
+//            EndIf                
+//        EndGet
+//    EndProp
+
+    DclFld _Length Type( *String ) Access(*Public) 
+//    BegProp length Type( *String )  Access( *Public )
+//        BegGet
+//            LeaveSr Value( _Length )
+//        EndGet
+//
+//        BegSet                              
+//            _Length = *PropVal
+//        EndSet
+//    EndProp
+
+    DclFld _Decimals Type( *String ) Access(*Public)
+//    BegProp decimals Type( *String )  Access( *Public )
+////        BegGet 
+////            LeaveSr Value( _Decimals )
+////        EndGet
+//
+//        BegSet
+//            _Decimals = *PropVal
+//        EndSet
+//    EndProp
+
+    BegProp lengthnumeric Type( *Integer4 )  Access( *Public )
+        BegGet
+            DclFld x Type(*Integer4) 
+            x = _Length.Trim()
+            LeaveSr Value(x) 
         EndGet
     EndProp
 
-    DclFld _Length Type( *String )
-    BegProp length Type( *String )  Access( *Public )
+    BegProp decimalsnumeric Type( *Integer4 )  Access( *Public )
         BegGet
-            LeaveSr Value( _Length )
+            DclFld x Type(*Integer4) 
+            x = _decimals.Trim()
+            LeaveSr Value(x)
         EndGet
-
-        BegSet                              
-            _Length = *PropVal
-        EndSet
-    EndProp
-
-    DclFld _Decimals Type( *String )
-    BegProp decimals Type( *String )  Access( *Public )
-        BegGet
-            LeaveSr Value( _Decimals )
-        EndGet
-
-        BegSet
-            _Decimals = *PropVal
-        EndSet
     EndProp
     
     DclFld _KeyPosition Type( *Integer4 )  Inz( -1 ) 
