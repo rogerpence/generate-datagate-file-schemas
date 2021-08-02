@@ -119,6 +119,10 @@ BegClass GenFileDescription
         fi.RecordLength  = Element.GetAttribute( "fileRecordLength" ) 
         fi.KeyLength     = Element.GetAttribute( "maxKeyLength" ) 
         fi.DuplicateKeys = Element.GetAttribute( "dupKeys" )
+
+        If fi.Duplicatekeys = 'none'
+            fi.Duplicatekeys = 'Not allowed'
+        EndIf
         
         Element = XmlDoc.SelectSingleNode( "fd:fileDef/fd:baseFiles", NamespaceManager ) *As XmlElement
         If ( Element <> *Nothing ) 
@@ -165,8 +169,8 @@ BegClass GenFileDescription
                 DataType = FieldType.ChildNodes[ 0 ] *As XmlElement
                 // x = RegEx.Replace( DataType.Name, "Field$", String.Empty ) 
                 FldInfo.Type     = GetFieldDetails( DataType, *ByRef FldLength, *ByRef FldDecimals ) 
-                FldInfo._Length   = FldLength
-                FldInfo._Decimals = FldDecimals
+                FldInfo.Length   = FldLength
+                FldInfo.Decimals = FldDecimals
             EndIf
             
             // Get field text.

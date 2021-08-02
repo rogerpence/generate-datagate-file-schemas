@@ -117,7 +117,7 @@ BegClass DataGateFile Access( *Public )
     
     BegProp sqlserveruniqueindex Type( *String )  Access( *Public )
         BegGet
-            If ( *This.DuplicateKeys = "none" ) 
+            If *This.DuplicateKeys = "none" OR *This.DuplicateKeys = "not allowed"  
                 LeaveSr "unique"
             Else
                 LeaveSr String.Empty 
