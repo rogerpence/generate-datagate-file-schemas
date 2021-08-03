@@ -165,19 +165,11 @@ BegClass ObjectWriter
         DclSrParm RootPath Type(*String) 
         DclSrParm TargetDirectory Type(*String) 
 
-//        If NOT RootPath.EndsWith('\') 
-//            RootPath = RootPath + '\'
-//        EndIf 
-//
+
         If NOT TargetDirectory.EndsWith('\') 
             TargetDirectory = TargetDirectory + '\'
         EndIf 
         *This.OutputPath = TargetDirectory 
-//
-//        *This.OutputPath = RootPath + TargetDirectory 
-//        If Not Directory.Exists(*This.OutputPath) 
-//            Directory.CreateDirectory(*This.OutputPath) 
-//        EndIf 
     EndConstructor 
 
     BegSr WriteJson Access(*Public) 
@@ -185,6 +177,7 @@ BegClass ObjectWriter
 
         DclFld Json Type(*String) 
         DclFld OutputFile Type(*String) 
+        DclFld LibraryName Type(*String) 
 
         ForEach FileObj Type(DataGateFile) Collection(FileList) 
             Json = NewtonSoft.Json.JsonConvert.SerializeObject(FileObj, Newtonsoft.Json.Formatting.Indented)
@@ -197,9 +190,15 @@ BegClass ObjectWriter
                 *This.isFirstFile = *False  
             EndIf 
 
-            OutputFile = *This.OutputPath + String.Format('{0}_{1}.json', FileObj.Library.ToLower(), FileObj.File.ToLower())
+            If FileObj.library = "/" 
+                LibraryName = "#root"
+            Else
+                LibraryName = FileObj.library.ToLower()
+            EndIf 
+
+            OutputFile = *This.OutputPath + String.Format('{0}_{1}.json', LibraryName, FileObj.File.ToLower())
         
-            Console.WriteLine('  Writing Json file schema: {0}_{1}', FileObj.Library.ToLower(), FileObj.File.ToLower())
+            Console.WriteLine('  Writing Json file schema: {0}_{1}', LibraryName, FileObj.File.ToLower())
             File.WriteAllText(OutputFile, Json, Encoding.UTF8) 
         EndFor 
     EndSr
