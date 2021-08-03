@@ -37,6 +37,10 @@ BegClass MainPgm Access(*Public)
         DclFld cam Type(CmdArgManager) 
         DclFld result Type(CommandLineUtility.CmdArgManager.ExitCode) 
 
+        DclFld LibOps Type(DataGateLibraryOperations) New()
+
+        DclArray Libraries Type(*String) Rank(1) 
+
         cam = *New CommandLineUtility.CmdArgManager(CmdLine, args, "Generate DataGate file schemas for a library")      
         AddHandler SourceObject(cam) SourceEvent(HelpShown) HandlerObject(*This) HandlerSr(HelpShownHandler) 
 
@@ -49,45 +53,71 @@ BegClass MainPgm Access(*Public)
         EndIf 
 
         Console.WriteLine('Working...') 
+
+        DclFld UserDocsPath Type(*String) 
+        DclFld DefaultPathRoot Type(*String) 
        
         // c:\users\xxx\documents
-        RootPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)
-
-        TargetFolder = PathJoin(RootPath, CmdLine.OutputPath) 
+        UserDocsPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)
+        DefaultPathRoot = System.Configuration.ConfigurationManager.AppSettings['defaultOutputPath']
+        TargetFolder = System.IO.Path.Combine(UserDocsPath, DefaultPathRoot, CmdLine.OutputPath) 
                 
         If NOT Directory.Exists(TargetFolder) 
             CustomConsole.WriteLineError('Target directory [{0}] does not exist', TargetFolder) 
             LeaveSr 
         EndIf 
 
+        If CmdLine.LibraryName.ToLower() <> '*all'
+            Libraries = *new *String[] {CmdLine.LibraryName, 'examples'}
+        Else 
+            Libraries = LibOps.GetLibraries(CmdLine.DatabaseName)
+        EndIf 
+        
         // Search for this text "Save XML to disk"
         // in the GetFileDescriptionClass to write XML file disk.
 
-        DclFld FileList Type(List(*Of DataGateFile)) New()
+        DclFld FileList Type(List(*Of DataGateFile)) 
         DclFld fso Type(FileSchemaOperations) 
 
-        fso = *New FileSchemaOperations(RootPath, TargetFolder)  
+        ForEach Library Type(*String) Collection(Libraries) 
         
-        Try         
-            FileList = fso.GetFileList(CmdLine.DatabaseName, CmdLine.LibraryName) 
-        Catch err Type(Exception) 
-            CustomConsole.WriteLineError(Err.Message) 
-            LeaveSr 
-        EndTry 
+            FileList = *New List(*Of DataGateFile)()
+            fso = *New FileSchemaOperations(RootPath, TargetFolder)  
         
-        ow = *New ObjectWriter(RootPath, TargetFolder) 
+            Try         
+                FileList = fso.GetFileList(CmdLine.DatabaseName, Library) 
+            Catch err Type(Exception) 
+                CustomConsole.WriteLineError(Err.Message) 
+                LeaveSr 
+            EndTry 
+        
+            ow = *New ObjectWriter(RootPath, TargetFolder) 
 
-        If CmdLine.YAML
-            ow.WriteYaml(FileList) 
-        Else
-            ow.WriteJson(FileList)
-        EndIf 
+            If CmdLine.YAML
+                ow.WriteYaml(FileList) 
+            Else
+                ow.WriteJson(FileList)
+            EndIf 
+
+        EndFor 
 
         If CmdLine.Pause
             Console.WriteLine('Press any key to continue...') 
             Console.ReadKey()
         EndIf 
     EndSr                
+
+    BegFunc ConvertArrayListToArray Type(*String) Rank(1) 
+        DclSrParm Libraries Type(ArrayList)
+
+        DclFld Members Type(List(*of String)) New()
+
+        ForEach Library Type(*String) Collection(Libraries) 
+            Members.Add(Library)
+        EndFor 
+
+        LeaveSr Members.ToArray()       
+    EndFunc 
 
     BegSr HelpShownHandler 
         DclSrParm Sender Type(*Object) 
@@ -103,8 +133,8 @@ BegClass MainPgm Access(*Public)
         CustomConsole.WriteLineInfo("The default schema output path is:") 
         CustomConsole.WriteLineInfo("  " + PathJoin(RootPath, CmdLine.OutputPath))
         CustomConsole.WriteLineInfo("The default output path is the user's Document path plus what is defined in the 'app.config' file.")
-        CustomConsole.WriteLineInfo("To change the output path at runtime, the --outputpath arg is appended to the user's Documents path.")
-        CustomConsole.WriteLineInfo("The runtime output path must exist.")
+        CustomConsole.WriteLineInfo("To change the output path at runtime, the --outputpath arg is appended to the user's Documents path")
+        CustomConsole.WriteLineInfo("plus the path in 'app.config'. The output path must exist.")
     EndSr 
 
     BegFunc PathJoin Type(*String) 
@@ -127,7 +157,7 @@ BegClass CommandLineArgs Access(*Public)
                          Attributes(CmdArg("--databasename", "-d", *True,  "Database Name"))
 
     DclProp LibraryName Type(*String)  Access(*Public) +
-                         Attributes(CmdArg("--library", "-l", *True, "Library name (or *LIBL if using a library list)"))
+                         Attributes(CmdArg("--library", "-l", *True, "Library name (or *All for all libraries)"))
 
     DclProp OutputPath Type(*String)  Access(*Public) +
                          Attributes(CmdArg("--outputpath", "-op", *False, "output path (appended to the user's Documents folder)"))
@@ -141,7 +171,8 @@ BegClass CommandLineArgs Access(*Public)
                          
     BegConstructor Access(*Public) 
         *This.Pause = *False 
-        *This.OutputPath = System.Configuration.ConfigurationManager.AppSettings['defaultOutputPath']
+        //*This.OutputPath = System.Configuration.ConfigurationManager.AppSettings['defaultOutputPath']
+        *This.OutputPath = String.Empty
     EndConstructor 
 EndClass
 

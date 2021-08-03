@@ -36,14 +36,14 @@ BegClass DataGateLibraryOperations Access(*Public)
         
         LeaveSr Array
     EndFunc 
-    
-    BegFunc GetLibraries Type( ArrayList ) Access( *Public ) 
+
+    BegFunc GetLibraries Type(*String) Rank(1) Access( *Public ) 
         //
         // Get all libraries in a database name.
         //
         DclSrParm DBName Type( *String ) 
     
-        DclFld Array Type( ArrayList ) New()
+        DclFld Libraries Type(List(*Of *String)) New()
         DclFld DB    Type( AdgConnection )
         DclFld Dir   Type( IDirectory )		
 
@@ -62,18 +62,59 @@ BegClass DataGateLibraryOperations Access(*Public)
 
         // If there are files in the root, add a root name to the list.
         If ( GetFiles( DBName, "/" ).Count > 0 ) 
-            Array.Add( "/" )
+            Libraries.Add( "/" )
         EndIf            
-        
-        // Add the other libraries.
-        ForEach Library Type( IAdgObject ) Collection( Dir.ItemList )         
-            Array.Add( Library.ToString().Remove( 0, 1 ) )       
+       
+        // Add the libraries.
+        ForEach Library Type( IAdgObject ) Collection( Dir.ItemList ) 
+            If Library.AdgObjectType.ToString().ToLower() = 'directory'
+                Libraries.Add( Library.ToString().Remove( 0, 1 ) )       
+            EndIf 
         EndFor 
         
         DB.Close()
         
-        LeaveSr Array
+        LeaveSr Libraries.ToArray() 
     EndFunc 
+
+    
+//    BegFunc GetLibraries Type( ArrayList ) Access( *Public ) 
+//        //
+//        // Get all libraries in a database name.
+//        //
+//        DclSrParm DBName Type( *String ) 
+//    
+//        DclFld Array Type( ArrayList ) New()
+//        DclFld DB    Type( AdgConnection )
+//        DclFld Dir   Type( IDirectory )		
+//
+//        DB = *New AdgConnection( DBName ) 
+//        Try 
+//            DB.Open()            
+//        Catch Error Type( System.Exception ) 
+//            Throw *New System.OperationCanceledException( "Failed to connect to DB: " + DBName )
+//        EndTry             
+//        
+//        Try
+//            Dir = AdgFactory.NewDirectory( DB, "/" )
+//        Catch Type(dgException)
+//            Throw *New System.OperationCanceledException( "Failed to find root in DB: " + DBName )
+//        EndTry
+//
+//        // If there are files in the root, add a root name to the list.
+//        If ( GetFiles( DBName, "/" ).Count > 0 ) 
+//            Array.Add( "/" )
+//        EndIf            
+//        
+//        // Add the other libraries.
+//        ForEach Library Type( IAdgObject ) Collection( Dir.ItemList )         
+//            Array.Add( Library.ToString().Remove( 0, 1 ) )       
+//        EndFor 
+//        
+//        DB.Close()
+//        
+//        LeaveSr Array
+//    EndFunc 
     
     BegFunc GetFiles Type(List(*Of *String))  Access( *Public ) 
         //
