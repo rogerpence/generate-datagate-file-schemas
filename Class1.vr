@@ -68,7 +68,7 @@ BegClass MainPgm Access(*Public)
         EndIf 
 
         If CmdLine.LibraryName.ToLower() <> '*all'
-            Libraries = *new *String[] {CmdLine.LibraryName, 'examples'}
+            Libraries = *new *String[] {CmdLine.LibraryName}
         Else 
             Libraries = LibOps.GetLibraries(CmdLine.DatabaseName)
         EndIf 
@@ -85,7 +85,7 @@ BegClass MainPgm Access(*Public)
             fso = *New FileSchemaOperations(RootPath, TargetFolder)  
         
             Try         
-                FileList = fso.GetFileList(CmdLine.DatabaseName, Library) 
+                FileList = fso.GetFileList(CmdLine.DatabaseName, Library, CmdLine.PhysicalsOnly) 
             Catch err Type(Exception) 
                 CustomConsole.WriteLineError(Err.Message) 
                 LeaveSr 
@@ -98,7 +98,6 @@ BegClass MainPgm Access(*Public)
             Else
                 ow.WriteJson(FileList)
             EndIf 
-
         EndFor 
 
         If CmdLine.Pause
@@ -168,7 +167,10 @@ BegClass CommandLineArgs Access(*Public)
     DclProp Pause Type(*Boolean)  Access(*Public) +
                          Attributes(CmdArg("--pause", "-p", *False, "Pause the screen after processing"))
 
-                         
+    DclProp PhysicalsOnly Type(*Boolean)  Access(*Public) +
+                         Attributes(CmdArg("--physicalsonly", "-po", *False, "Process physical files only"))
+
+                             
     BegConstructor Access(*Public) 
         *This.Pause = *False 
         //*This.OutputPath = System.Configuration.ConfigurationManager.AppSettings['defaultOutputPath']
@@ -196,7 +198,6 @@ BegClass ObjectWriter
         DclSrParm RootPath Type(*String) 
         DclSrParm TargetDirectory Type(*String) 
 
-
         If NOT TargetDirectory.EndsWith('\') 
             TargetDirectory = TargetDirectory + '\'
         EndIf 
@@ -209,8 +210,26 @@ BegClass ObjectWriter
         DclFld Json Type(*String) 
         DclFld OutputFile Type(*String) 
         DclFld LibraryName Type(*String) 
+        DclFld SqlToCreateTable Type(*String) 
+
+        DclFld SqlDBName Type(*String) 
+
+        SqlDBName = 'TestDB' 
 
         ForEach FileObj Type(DataGateFile) Collection(FileList) 
+            DclFld x Type(*String) 
+
+            x = FileOBj.file
+            Dclfld fc Type(FieldCollection) 
+
+            fc = FileObj.Fields
+
+            ForEach fld Type(Field) Collection(FileObj.fields) 
+                x = fld.type
+            EndFor 
+
+            SqlToCreateTable = SqlOperations.WriteSQLSchema(FileObj, SQLDBName) 
+
             Json = NewtonSoft.Json.JsonConvert.SerializeObject(FileObj, Newtonsoft.Json.Formatting.Indented)
             // File meta data from the IBM i sometimes has trailing high-order characters. Strip those off. 
             // I've only see this occur in the trailing characters of the field description. 
@@ -227,10 +246,17 @@ BegClass ObjectWriter
                 LibraryName = FileObj.library.ToLower()
             EndIf 
 
-            OutputFile = *This.OutputPath + String.Format('{0}_{1}.json', LibraryName, FileObj.File.ToLower())
-        
+            OutputFile = *This.OutputPath + String.Format('{0}_{1}.json', LibraryName, FileObj.File.ToLower())        
             Console.WriteLine('  Writing Json file schema: {0}_{1}', LibraryName, FileObj.File.ToLower())
+            //Console.WriteLine(OutputFile) 
             File.WriteAllText(OutputFile, Json, Encoding.UTF8) 
+
+            If FileObj.type = 'physical'
+                OutputFile = *This.OutputPath + String.Format('create_table_{0}_{1}.sql', LibraryName, FileObj.File.ToLower())        
+                Console.WriteLine('  Writing SQL to create file: {0}_{1}', LibraryName, FileObj.File.ToLower())
+                //Console.WriteLine(OutputFile) 
+                File.WriteAllText(OutputFile, SqlToCreateTable, Encoding.UTF8) 
+            EndIf 
         EndFor 
     EndSr
 
@@ -308,6 +334,7 @@ BegClass FileSchemaOperations
     BegFunc GetFileList Type(List(*Of DataGateFile)) Access(*Public) 
         DclSrParm DBName Type(*String) 
         DclSrParm Library Type(*String) 
+        DclSrParm PhysicalsOnly Type(*Boolean) 
 
         DclFld LibOps Type(DataGateLibraryOperations) New()
         DclFld DGFileOperations Type(DataGateFileOperations) New()
@@ -320,9 +347,16 @@ BegClass FileSchemaOperations
         ForEach FileName Type(*String) Collection(FileNameList) 
             DGFile = DGFileOperations.GetFileObject(DBName, Library, FileName)      
                  
-            If DGFile.Type.ToLower() = 'physical' OR DGFile.Type.ToLower().Contains('logical')  
-                FileList.Add(DGFile) 
+            If PhysicalsOnly 
+                If DGFile.Type.ToLower() = 'physical' 
+                    FileList.Add(DGFile)
+                EndIf
+            Else 
+                If DGFile.Type.ToLower() = 'physical' OR DGFile.Type.ToLower().Contains('logical')  
+                    FileList.Add(DGFile)
+                EndIf 
             EndIf 
+
         EndFor 
 
         LeaveSr FileList 
@@ -344,5 +378,3 @@ BegClass FileSchemaOperations
 	EndFunc 
 
 EndClass
-
-

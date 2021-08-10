@@ -1,8 +1,10 @@
 Using System
 Using System.Text
+Using System.TExt.RegularExpressions
 Using System.Collections
 Using System.Collections.Specialized
 Using System.Text.RegularExpressions
+Using System.IO 
 
 BegClass Field Access(*Public)
 
@@ -42,6 +44,7 @@ BegClass Field Access(*Public)
         DataTypes.Add( "*integer4"  , "System.Int32"   ) 
         DataTypes.Add( "*integer8"  , "System.Int64"   ) 
         DataTypes.Add( "*onechar"   , "System.Char"    ) 
+        DataTypes.Add( "*integer"   , "System.Int64"    ) 
 
     EndConstructor
     
@@ -186,6 +189,25 @@ BegClass Field Access(*Public)
         EndSet
     EndProp
   
+    BegFunc PopulateSqlServerDataTypes Type(NameValueCollection) 
+        DclFld fullFilename Type(*String)
+        DclArray SqlTypes Type(*String) Rank(1) 
+        DclFld result Type( NameValueCollection ) New()
+        DclArray types Type(*String) Rank(1)
+
+        fullFilename = Path.Combine(AppDomain.CurrentDomain.BaseDirectory,'sqlserver_datatypes.txt') 
+        SqlTypes = File.ReadAllLines(fullFilename)
+        Foreach sqlType Type(*String) Collection(SqlTypes) 
+            If NOT String.IsNullOrEmpty(SqlType.Trim()) 
+                types = Regex.Split(sqlType.Trim(), '\s*\|\s*')
+                result.Add(types[0], types[1])
+            Endif 
+        EndFor
+
+        LeaveSr result
+    EndFunc
+
+
     BegFunc GetSqlServerType Type( *String ) 
         DclFld Result Type( *String )
 
@@ -201,29 +223,34 @@ BegClass Field Access(*Public)
         Length = *This.length
         Decimals = *This.decimals
 
-        DclFld SqlDataTypes Type( NameValueCollection ) New()
-        SqlDataTypes.Add( "*string"    , "char"  )
-        SqlDataTypes.Add( "*char"      , "varchar({0})"  ) 
-        SqlDataTypes.Add( "*date"      , "datetime" ) 
-        SqlDataTypes.Add( "*time"      , "datetime" ) 
-        SqlDataTypes.Add( "*timestamp" , "dateTime" )        
-        SqlDataTypes.Add( "*boolean"   , "bit" ) 
-        SqlDataTypes.Add( "*indicator" , "System.Char" ) 
-        SqlDataTypes.Add( "*binary"    , "numeric" ) 
-        SqlDataTypes.Add( "*decimal"   , "decimal" ) 
-        SqlDataTypes.Add( "*packed"    , "decimal" ) 
-        SqlDataTypes.Add( "*zoned"     , "numeric" ) 
-        SqlDataTypes.Add( "*float4"    , "float(4)" ) 
-        SqlDataTypes.Add( "*float8"    , "float(8)" ) 
-        SqlDataTypes.Add( "*byte"      , "bit" ) 
-        SqlDataTypes.Add( "*integer2"  , "integer(2)"   ) 
-        SqlDataTypes.Add( "*integer4"  , "integer(4)"   ) 
-        SqlDataTypes.Add( "*integer8"  , "bigint"   ) 
-        SqlDataTypes.Add( "*onechar"   , "char"    ) 
+        DclFld SqlDataTypes Type( NameValueCollection ) // New()
+        SqlDataTypes = PopulateSqlServerDataTypes()
+
+//        DclFld SqlDataTypes Type( NameValueCollection ) New()
+//        SqlDataTypes.Add( "*string"    , "char"  )
+//        SqlDataTypes.Add( "*char"      , "varchar({0})"  ) 
+//        SqlDataTypes.Add( "*date"      , "datetime" ) 
+//        SqlDataTypes.Add( "*time"      , "datetime" ) 
+//        SqlDataTypes.Add( "*timestamp" , "dateTime" )        
+//        SqlDataTypes.Add( "*boolean"   , "bit" ) 
+//        SqlDataTypes.Add( "*indicator" , "System.Char" ) 
+//        SqlDataTypes.Add( "*binary"    , "numeric" ) 
+//        SqlDataTypes.Add( "*decimal"   , "decimal" ) 
+//        SqlDataTypes.Add( "*packed"    , "decimal" ) 
+//        SqlDataTypes.Add( "*zoned"     , "numeric" ) 
+//        SqlDataTypes.Add( "*float4"    , "float(4)" ) 
+//        SqlDataTypes.Add( "*float8"    , "float(8)" ) 
+//        SqlDataTypes.Add( "*byte"      , "bit" ) 
+//        SqlDataTypes.Add( "*integer2"  , "integer(2)"   ) 
+//        SqlDataTypes.Add( "*integer4"  , "integer(4)"   ) 
+//        SqlDataTypes.Add( "*integer8"  , "bigint"   ) 
+//        SqlDataTypes.Add( "*onechar"   , "char"    ) 
+//        SqlDataTypes.Add( "int(long)"  , "bigint"    ) 
+
 
         Result = "N/A"
                 
-        If SqlDataTypes[*This.Type] <> *Nothing
+         If SqlDataTypes[*This.Type] <> *Nothing
             If *This.type = '*char'
                 Result = String.Format(SqlDataTypes[*This.Type], *This.length)
             Else 

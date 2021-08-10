@@ -86,12 +86,19 @@
       </SubType>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.vr" />
+    <Compile Include="SQLOperations.vr">
+      <SubType>
+      </SubType>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Properties\" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="sqlserver_datatypes.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\ASNA\VisualRPG\v11.2\ASNA.VisualRPG.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
