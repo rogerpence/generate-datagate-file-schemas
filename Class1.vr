@@ -24,10 +24,6 @@ BegClass MainPgm Access(*Public)
 
     BegSr Run Access(*Public) 
         DclSrParm args Type(*String) Rank(1) 
-        /*
-            GenFileSchema <DBName> <Library> 
-            GetFileSchema <DBName> <Library> <Filename>
-         */
 
         DclFld RootPath Type(*String) 
         DclFld TargetFolder Type(*String) 
@@ -79,8 +75,13 @@ BegClass MainPgm Access(*Public)
         DclFld FileList Type(List(*Of DataGateFile)) 
         DclFld fso Type(FileSchemaOperations) 
 
-        ForEach Library Type(*String) Collection(Libraries) 
-        
+        If CmdLine.SQLServerDB <> String.Empty 
+            CustomConsole.WriteLineInfo('Processing only physical files')
+        Else 
+            CustomConsole.WriteLineInfo('Processing only physical and logical files')
+        EndIf 
+
+        ForEach Library Type(*String) Collection(Libraries)         
             FileList = *New List(*Of DataGateFile)()
             fso = *New FileSchemaOperations(RootPath, TargetFolder)  
         
@@ -96,7 +97,7 @@ BegClass MainPgm Access(*Public)
             If CmdLine.YAML
                 ow.WriteYaml(FileList) 
             Else
-                ow.WriteJson(FileList)
+                ow.WriteJson(FileList, CmdLine.SQLServerDB)
             EndIf 
         EndFor 
 
@@ -170,11 +171,16 @@ BegClass CommandLineArgs Access(*Public)
     DclProp PhysicalsOnly Type(*Boolean)  Access(*Public) +
                          Attributes(CmdArg("--physicalsonly", "-po", *False, "Process physical files only"))
 
+    DclProp SQLServerDB Type(*String)  Access(*Public) +
+                         Attributes(CmdArg("--sqlserverdb", "-sdb", *False, "SQL Server database name for CREATE TABLE SQL"))
+
                              
     BegConstructor Access(*Public) 
         *This.Pause = *False 
         //*This.OutputPath = System.Configuration.ConfigurationManager.AppSettings['defaultOutputPath']
         *This.OutputPath = String.Empty
+        *This.PhysicalsOnly = *True 
+        *This.SQLServerDB = String.Empty 
     EndConstructor 
 EndClass
 
@@ -206,15 +212,12 @@ BegClass ObjectWriter
 
     BegSr WriteJson Access(*Public) 
         DclSrParm FileList Type(List(*Of DataGateFile)) 
+        DclSrParm SQLServerDBName Type(*String) 
 
         DclFld Json Type(*String) 
         DclFld OutputFile Type(*String) 
         DclFld LibraryName Type(*String) 
         DclFld SqlToCreateTable Type(*String) 
-
-        DclFld SqlDBName Type(*String) 
-
-        SqlDBName = 'TestDB' 
 
         ForEach FileObj Type(DataGateFile) Collection(FileList) 
             DclFld x Type(*String) 
@@ -227,8 +230,6 @@ BegClass ObjectWriter
             ForEach fld Type(Field) Collection(FileObj.fields) 
                 x = fld.type
             EndFor 
-
-            SqlToCreateTable = SqlOperations.WriteSQLSchema(FileObj, SQLDBName) 
 
             Json = NewtonSoft.Json.JsonConvert.SerializeObject(FileObj, Newtonsoft.Json.Formatting.Indented)
             // File meta data from the IBM i sometimes has trailing high-order characters. Strip those off. 
@@ -248,13 +249,12 @@ BegClass ObjectWriter
 
             OutputFile = *This.OutputPath + String.Format('{0}_{1}.json', LibraryName, FileObj.File.ToLower())        
             Console.WriteLine('  Writing Json file schema: {0}_{1}', LibraryName, FileObj.File.ToLower())
-            //Console.WriteLine(OutputFile) 
             File.WriteAllText(OutputFile, Json, Encoding.UTF8) 
 
-            If FileObj.type = 'physical'
+            If SQLServerDBName <> String.Empty AND FileObj.type = 'physical' 
+                SqlToCreateTable = SqlOperations.WriteSQLSchema(FileObj, SQLServerDBName) 
                 OutputFile = *This.OutputPath + String.Format('create_table_{0}_{1}.sql', LibraryName, FileObj.File.ToLower())        
                 Console.WriteLine('  Writing SQL to create file: {0}_{1}', LibraryName, FileObj.File.ToLower())
-                //Console.WriteLine(OutputFile) 
                 File.WriteAllText(OutputFile, SqlToCreateTable, Encoding.UTF8) 
             EndIf 
         EndFor 
@@ -296,18 +296,10 @@ BegClass FileSchemaOperations
         DclSrParm RootPath Type(*String) 
         DclSrParm TargetDirectory Type(*String) 
 
-//        If NOT RootPath.EndsWith('\') 
-//            RootPath = RootPath + '\'
-//        EndIf 
-
         If NOT TargetDirectory.EndsWith('\') 
             TargetDirectory = TargetDirectory + '\'
         EndIf 
 
-//        *This.OutputPath = RootPath + TargetDirectory 
-//        If Not Directory.Exists(*This.OutputPath) 
-//            Directory.CreateDirectory(*This.OutputPath) 
-//        EndIf 
     EndConstructor 
 
     BegSr WriteFileSchemaAsJson Access(*Public) 

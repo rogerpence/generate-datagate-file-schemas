@@ -320,6 +320,14 @@ BegClass DataGateFileOperations Access(*Public)
             DataType = "Type error:" + DataType
             Length   = String.Empty
             Decimals = String.Empty 
+
+
+
+
+
+
+
+
             
         EndIf
         

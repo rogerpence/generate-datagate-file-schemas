@@ -42,7 +42,6 @@ BegClass GenFileDescription
         LeaveSr *True 
 	EndFunc    
 
-
     // rpnote: !important
     BegFunc GetFileObject Type(FileDef) Access( *Public )   
         DclSrParm DBName    Type( *String )
