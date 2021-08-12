@@ -77,6 +77,8 @@ BegClass MainPgm Access(*Public)
 
         If CmdLine.SQLServerDB <> String.Empty 
             CustomConsole.WriteLineInfo('Processing only physical files')
+
+
         Else 
             CustomConsole.WriteLineInfo('Processing only physical and logical files')
         EndIf 
@@ -220,17 +222,6 @@ BegClass ObjectWriter
         DclFld SqlToCreateTable Type(*String) 
 
         ForEach FileObj Type(DataGateFile) Collection(FileList) 
-            DclFld x Type(*String) 
-
-            x = FileOBj.file
-            Dclfld fc Type(FieldCollection) 
-
-            fc = FileObj.Fields
-
-            ForEach fld Type(Field) Collection(FileObj.fields) 
-                x = fld.type
-            EndFor 
-
             Json = NewtonSoft.Json.JsonConvert.SerializeObject(FileObj, Newtonsoft.Json.Formatting.Indented)
             // File meta data from the IBM i sometimes has trailing high-order characters. Strip those off. 
             // I've only see this occur in the trailing characters of the field description. 
@@ -283,12 +274,9 @@ BegClass ObjectWriter
             File.WriteAllText(OutputFile, Yaml, Encoding.UTF8) 
         EndFor 
     EndSr
-
-
 EndClass 
 
 BegClass FileSchemaOperations
-
     DclFld OutputPath Type(*String) 
     DclFld isFirstFile Type(*Boolean) Inz(*True) 
 
@@ -338,7 +326,7 @@ BegClass FileSchemaOperations
 
         ForEach FileName Type(*String) Collection(FileNameList) 
             DGFile = DGFileOperations.GetFileObject(DBName, Library, FileName)      
-                 
+                
             If PhysicalsOnly 
                 If DGFile.Type.ToLower() = 'physical' 
                     FileList.Add(DGFile)

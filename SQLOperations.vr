@@ -1,5 +1,6 @@
 ﻿Using System
 Using System.Text
+Using System.Text.RegularExpressions
 Using System.Collections.Generic
 
 DclNamespace GenFileSchema
@@ -14,6 +15,8 @@ BegClass SQLOperations Access(*Public)
 
         DclFld fullsql Type(StringBuilder) New() 
         DclFld i Type(*Integer4) 
+        DclFld sb Type(StringBuilder) New()
+        DclArray keyFields Type(*String) Rank(1) 
 
         fullSql.AppendLine('Use {{sqlDB}}') 
         fullSql.AppendLine("")
@@ -23,6 +26,14 @@ BegClass SQLOperations Access(*Public)
 
         fullSql.Replace('{{sqlDB}}', SqlDBName) 
         fullSql.Replace('{{file}}', f.file) 
+
+        DclFld x Type(*String) 
+
+            ForEach fld Type(Field) Collection(f.fields) 
+                x = fld.type
+                x = fld.sqlservertype
+            EndFor 
+
 
         For Index(i = 0) To(f.fields.Count -1)
             fld = f.fields[i]
@@ -34,12 +45,26 @@ BegClass SQLOperations Access(*Public)
             EndIf 
         EndFor
 
+        DclFld xx Type(*String) 
+
         If f.duplicatekeys <> 'allowed'
+            sb.Clear()
+
+            // Surround each key field with brackets.                
+            KeyFields = Regex.Split(f.keyfieldslist, '\s*,\s*') 
+            For Index(i = 0) To(KeyFields.Length - 1) 
+                sb.Append(String.Format('[{0}]', KeyFields[i]))
+                If i < KeyFields.Length - 1 
+                    sb.Append(', ') 
+                EndIf 
+                xx = sb.ToString()
+            EndFor 
+
             If f.keyfieldslist <> *Blanks
                 fullSql.Append(",")
                 fullSql.AppendLine("")
                 fullSql.AppendLine("")
-                fullSql.AppendLine(String.Format("    PRIMARY KEY ({0})", f.keyfieldslist))
+                fullSql.AppendLine(String.Format("    PRIMARY KEY ({0})", sb.ToString()))
             EndIf 
         Else 
             fullSql.AppendLine("")
@@ -49,6 +74,7 @@ BegClass SQLOperations Access(*Public)
 
         LeaveSr fullSql.ToString()
     EndFunc 
+
 
 EndClass
   

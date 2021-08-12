@@ -1,0 +1,189 @@
+diff --git a/Class1.vr b/Class1.vr
+index c46bdb1..d823488 100644
+--- a/Class1.vr
++++ b/Class1.vr
+@@ -220,17 +220,6 @@ BegClass ObjectWriter
+         DclFld SqlToCreateTable Type(*String) 
+ 
+         ForEach FileObj Type(DataGateFile) Collection(FileList) 
+-            DclFld x Type(*String) 
+-
+-            x = FileOBj.file
+-            Dclfld fc Type(FieldCollection) 
+-
+-            fc = FileObj.Fields
+-
+-            ForEach fld Type(Field) Collection(FileObj.fields) 
+-                x = fld.type
+-            EndFor 
+-
+             Json = NewtonSoft.Json.JsonConvert.SerializeObject(FileObj, Newtonsoft.Json.Formatting.Indented)
+             // File meta data from the IBM i sometimes has trailing high-order characters. Strip those off. 
+             // I've only see this occur in the trailing characters of the field description. 
+@@ -251,6 +240,8 @@ BegClass ObjectWriter
+             Console.WriteLine('  Writing Json file schema: {0}_{1}', LibraryName, FileObj.File.ToLower())
+             File.WriteAllText(OutputFile, Json, Encoding.UTF8) 
+ 
++
++
+             If SQLServerDBName <> String.Empty AND FileObj.type = 'physical' 
+                 SqlToCreateTable = SqlOperations.WriteSQLSchema(FileObj, SQLServerDBName) 
+                 OutputFile = *This.OutputPath + String.Format('create_table_{0}_{1}.sql', LibraryName, FileObj.File.ToLower())        
+@@ -338,7 +329,7 @@ BegClass FileSchemaOperations
+ 
+         ForEach FileName Type(*String) Collection(FileNameList) 
+             DGFile = DGFileOperations.GetFileObject(DBName, Library, FileName)      
+-                 
++                
+             If PhysicalsOnly 
+                 If DGFile.Type.ToLower() = 'physical' 
+                     FileList.Add(DGFile)
+diff --git a/Field.vr b/Field.vr
+index 50a8de3..8ecc4ba 100644
+--- a/Field.vr
++++ b/Field.vr
+@@ -9,7 +9,7 @@ Using System.IO
+ BegClass Field Access(*Public)
+ 
+     DclFld DataTypes    Type( NameValueCollection ) New()
+-//    DclFld SqlDataTypes Type( NameValueCollection ) New()
++    DclFld SqlDataTypes Type( NameValueCollection ) New()
+ 
+     BegConstructor Access( *Public ) Base()
+         DclSrParm Name         Type( *String ) 
+@@ -46,6 +46,7 @@ BegClass Field Access(*Public)
+         DataTypes.Add( "*onechar"   , "System.Char"    ) 
+         DataTypes.Add( "*integer"   , "System.Int64"    ) 
+ 
++        SqlDataTypes = PopulateSqlServerDataTypes()
+     EndConstructor
+     
+     DclFld _Name Type( *String )
+@@ -117,7 +118,11 @@ BegClass Field Access(*Public)
+     DclFld _Type Type( *String )
+     BegProp type Type( *String )  Access( *Public )
+         BegGet
+-            LeaveSr Value( '*' + _Type.ToLower() )
++            If NOT _Type.StartsWith('*')             
++                LeaveSr Value( '*' + _Type.ToLower() )
++            Else 
++                LeaveSr Value(_Type.ToLower() )
++            EndIf 
+         EndGet
+ 
+         BegSet
+@@ -204,55 +209,45 @@ BegClass Field Access(*Public)
+             Endif 
+         EndFor
+ 
++        ForEach k Type(String) Collection(Result.Keys) 
++            DclFld x Type(*String) 
++            x = Result[k]
++        EndFor 
++        
+         LeaveSr result
+     EndFunc
+-
+-
++    
+     BegFunc GetSqlServerType Type( *String ) 
+         DclFld Result Type( *String )
+ 
+         DclFld Name Type(*String)
+         DclFld FullType Type(*String) 
+-        DclFld Type Type(*String)
++        DclFld DataType Type(*String)
+         DclFld Length Type(*Integer4) 
+         DclFld Decimals Type(*Integer4) 
+ 
+         Name = *This.name 
+         FullType = *This.fulltype
+-        Type = *This.type 
++        DataType = *This.type 
+         Length = *This.length
+         Decimals = *This.decimals
+ 
+-        DclFld SqlDataTypes Type( NameValueCollection ) // New()
+-        SqlDataTypes = PopulateSqlServerDataTypes()
+-
+-//        DclFld SqlDataTypes Type( NameValueCollection ) New()
+-//        SqlDataTypes.Add( "*string"    , "char"  )
+-//        SqlDataTypes.Add( "*char"      , "varchar({0})"  ) 
+-//        SqlDataTypes.Add( "*date"      , "datetime" ) 
+-//        SqlDataTypes.Add( "*time"      , "datetime" ) 
+-//        SqlDataTypes.Add( "*timestamp" , "dateTime" )        
+-//        SqlDataTypes.Add( "*boolean"   , "bit" ) 
+-//        SqlDataTypes.Add( "*indicator" , "System.Char" ) 
+-//        SqlDataTypes.Add( "*binary"    , "numeric" ) 
+-//        SqlDataTypes.Add( "*decimal"   , "decimal" ) 
+-//        SqlDataTypes.Add( "*packed"    , "decimal" ) 
+-//        SqlDataTypes.Add( "*zoned"     , "numeric" ) 
+-//        SqlDataTypes.Add( "*float4"    , "float(4)" ) 
+-//        SqlDataTypes.Add( "*float8"    , "float(8)" ) 
+-//        SqlDataTypes.Add( "*byte"      , "bit" ) 
+-//        SqlDataTypes.Add( "*integer2"  , "integer(2)"   ) 
+-//        SqlDataTypes.Add( "*integer4"  , "integer(4)"   ) 
+-//        SqlDataTypes.Add( "*integer8"  , "bigint"   ) 
+-//        SqlDataTypes.Add( "*onechar"   , "char"    ) 
+-//        SqlDataTypes.Add( "int(long)"  , "bigint"    ) 
+-
++        //DclFld SqlDataTypes Type( NameValueCollection ) // New()
++//        SqlDataTypes = PopulateSqlServerDataTypes()
+ 
+         Result = "N/A"
++
++        DclFld SqlServerType Type(*String) 
++        SqlServerType = SqlDataTypes[DataType]
+                 
+-         If SqlDataTypes[*This.Type] <> *Nothing
+-            If *This.type = '*char'
+-                Result = String.Format(SqlDataTypes[*This.Type], *This.length)
++         If SqlDataTypes[DataType] <> *Nothing
++            If     DataType = '*char'
++                       Result = String.Format(SqlDataTypes[DataType], Length)
++            ElseIf DataType = '*decimal' OR +
++                   DataType = '*packed' 
++                   DataType = '*zoned' 
++                       SqlServerType = SqlDataTypes[DataType]
++                       Result = String.Format(SqlDataTypes[DataType], length, decimals) 
+             Else 
+                 Result = SqlDataTypes[*This.Type]
+             EndIf
+diff --git a/SQLOperations.vr b/SQLOperations.vr
+index 1f311e5..4c36260 100644
+--- a/SQLOperations.vr
++++ b/SQLOperations.vr
+@@ -24,6 +24,14 @@ BegClass SQLOperations Access(*Public)
+         fullSql.Replace('{{sqlDB}}', SqlDBName) 
+         fullSql.Replace('{{file}}', f.file) 
+ 
++        DclFld x Type(*String) 
++
++            ForEach fld Type(Field) Collection(f.fields) 
++                x = fld.type
++                x = fld.sqlservertype
++            EndFor 
++
++
+         For Index(i = 0) To(f.fields.Count -1)
+             fld = f.fields[i]
+ 
+diff --git a/sqlserver_datatypes.txt b/sqlserver_datatypes.txt
+index 4a99b79..043a1a6 100644
+--- a/sqlserver_datatypes.txt
++++ b/sqlserver_datatypes.txt
+@@ -5,10 +5,10 @@
+ *timestamp   |  dateTime        
+ *boolean     |  bit 
+ *indicator   |  char 
+-*binary      |  numeric 
+-*decimal     |  decimal 
+-*packed      |  decimal 
+-*zoned       |  numeric 
++*binary      |  numeric({0},{1})  
++*decimal     |  decimal({0},{1}) 
++*packed      |  decimal({0},{1})  
++*zoned       |  numeric({0},{1})  
+ *float4      |  float(4) 
+ *float8      |  float(8) 
+ *byte        |  bit

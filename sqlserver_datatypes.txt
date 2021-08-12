@@ -5,10 +5,10 @@
 *timestamp   |  dateTime        
 *boolean     |  bit 
 *indicator   |  char 
-*binary      |  numeric 
-*decimal     |  decimal 
-*packed      |  decimal 
-*zoned       |  numeric 
+*binary      |  numeric({0},{1})  
+*decimal     |  decimal({0},{1}) 
+*packed      |  decimal({0},{1})  
+*zoned       |  numeric({0},{1})  
 *float4      |  float(4) 
 *float8      |  float(8) 
 *byte        |  bit
