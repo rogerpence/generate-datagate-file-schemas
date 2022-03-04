@@ -170,7 +170,7 @@ BegClass CommandLineArgs Access(*Public)
                          Attributes(CmdArg("--pause", "-p", *False, "Pause the screen after processing"))
 
     DclProp PhysicalsOnly Type(*Boolean)  Access(*Public) +
-                         Attributes(CmdArg("--physicalsonly", "-po", *False, "Process physical files only"))
+                         Attributes(CmdArg("--physicalsonly", "-po", *False, "Process physical files only (default is false)"))
 
     DclProp SQLServerDB Type(*String)  Access(*Public) +
                          Attributes(CmdArg("--sqlserverdb", "-sdb", *False, "SQL Server database name for CREATE TABLE SQL"))
@@ -180,7 +180,7 @@ BegClass CommandLineArgs Access(*Public)
         *This.Pause = *False 
         //*This.OutputPath = System.Configuration.ConfigurationManager.AppSettings['defaultOutputPath']
         *This.OutputPath = String.Empty
-        *This.PhysicalsOnly = *True 
+        *This.PhysicalsOnly = *False
         *This.SQLServerDB = String.Empty 
     EndConstructor 
 EndClass
@@ -326,7 +326,7 @@ BegClass FileSchemaOperations
         ForEach FileName Type(*String) Collection(FileNameList) 
             DGFile = DGFileOperations.GetFileObject(DBName, Library, FileName)   
             
-            PhysicalsOnly = *False
+            //PhysicalsOnly = *False
                 
             If PhysicalsOnly 
                 If DGFile.Type.ToLower() = 'physical' 
