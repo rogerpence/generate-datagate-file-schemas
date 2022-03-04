@@ -6,7 +6,7 @@ Using System.Text
 Using System.Text.RegularExpressions
 Using System.Xml
 Using System.IO
-Using NewtonSoft
+Using NewtonSoftph
 using YamlDotNet.Serialization
 using YamlDotNet.Samples.Helpers
 using CommandLineUtility
@@ -75,10 +75,8 @@ BegClass MainPgm Access(*Public)
         DclFld FileList Type(List(*Of DataGateFile)) 
         DclFld fso Type(FileSchemaOperations) 
 
-        If CmdLine.SQLServerDB <> String.Empty 
+        If CmdLine.PhysicalsOnly
             CustomConsole.WriteLineInfo('Processing only physical files')
-
-
         Else 
             CustomConsole.WriteLineInfo('Processing only physical and logical files')
         EndIf 
@@ -89,6 +87,7 @@ BegClass MainPgm Access(*Public)
         
             Try         
                 FileList = fso.GetFileList(CmdLine.DatabaseName, Library, CmdLine.PhysicalsOnly) 
+
             Catch err Type(Exception) 
                 CustomConsole.WriteLineError(Err.Message) 
                 LeaveSr 
@@ -325,7 +324,9 @@ BegClass FileSchemaOperations
         FileNameList = LibOps.GetFiles(DBName, Library)
 
         ForEach FileName Type(*String) Collection(FileNameList) 
-            DGFile = DGFileOperations.GetFileObject(DBName, Library, FileName)      
+            DGFile = DGFileOperations.GetFileObject(DBName, Library, FileName)   
+            
+            PhysicalsOnly = *False
                 
             If PhysicalsOnly 
                 If DGFile.Type.ToLower() = 'physical' 

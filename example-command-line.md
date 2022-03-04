@@ -1,0 +1,1 @@
+genfileschema -d "*Public/DG NET Local" -l examples -op examples
