@@ -92,19 +92,19 @@ BegClass Field Access(*Public)
 
             FieldType = *This.Type 
 
-            If *This.type = '*date' OR +
-               *This.type = '*time' OR +
-               *This.type = '*timestamp' OR +
-               *This.type = '*onechar' OR + 
-               *This.type = '*boolean' OR + 
-               *This.type = '*byte' OR + 
-               *This.type = '*integer' OR + 
-               *This.type = '*integer2' OR + 
-               *This.type = '*integer4' OR + 
-               *This.type = '*integer8'
+            If *This.type.ToLower() = '*date' OR +
+               *This.type.ToLower() = '*time' OR +
+               *This.type.ToLower() = '*timestamp' OR +
+               *This.type.ToLower() = '*onechar' OR + 
+               *This.type.ToLower() = '*boolean' OR + 
+               *This.type.ToLower() = '*byte' OR + 
+               *This.type.ToLower() = '*integer' OR + 
+               *This.type.ToLower() = '*integer2' OR + 
+               *This.type.ToLower() = '*integer4' OR + 
+               *This.type.ToLower() = '*integer8'
                 LeaveSr String.Format( TypeMask, FieldType ) 
 
-            ElseIf *This.type = '*char'
+            ElseIf *This.type.ToLower() = '*char'
                 LeaveSr String.Format( TypeMaskNoDecimals, FieldType, *This._Length.ToString().Trim() ) 
             
             Else
@@ -114,14 +114,14 @@ BegClass Field Access(*Public)
         EndGet
     EndProp
 
-
+    
     DclFld _Type Type( *String )
     BegProp type Type( *String )  Access( *Public )
         BegGet
             If NOT _Type.StartsWith('*')             
-                LeaveSr Value( '*' + _Type.ToLower() )
+                LeaveSr Value( '*' + _Type )
             Else 
-                LeaveSr Value(_Type.ToLower() )
+                LeaveSr Value(_Type )
             EndIf 
         EndGet
 
@@ -144,8 +144,8 @@ BegClass Field Access(*Public)
     DclFld _Decimals Type( *Integer4 ) Access(*Private)
     BegProp decimals Type( *String )  Access( *Public )
         BegGet 
-            If *This.type = '*zoned' OR +
-               *This.type = '*packed' 
+            If *This.type.ToLower() = '*zoned' OR +
+               *This.type.ToLower() = '*packed' 
                 LeaveSr Value( _Decimals )
             Else 
                 LeaveSr String.Empty 
@@ -241,11 +241,11 @@ BegClass Field Access(*Public)
         SqlServerType = SqlDataTypes[DataType]
                 
          If SqlDataTypes[DataType] <> *Nothing
-            If     DataType = '*char'
+            If     DataType.ToLower() = '*char'
                        Result = String.Format(SqlDataTypes[DataType], Length)
-            ElseIf DataType = '*decimal' OR +
-                   DataType = '*packed' 
-                   DataType = '*zoned' 
+            ElseIf DataType.ToLower() = '*decimal' OR +
+                   DataType.ToLower() = '*packed' OR +  
+                   DataType.ToLower() = '*zoned' 
                        SqlServerType = SqlDataTypes[DataType]
                        Result = String.Format(SqlDataTypes[DataType], length, decimals) 
             Else 
