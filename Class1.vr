@@ -237,8 +237,8 @@ BegClass ObjectWriter
                 LibraryName = FileObj.library.ToLower()
             EndIf 
 
-            OutputFile = *This.OutputPath + String.Format('{0}_{1}.json', LibraryName, FileObj.File.ToLower())        
-            Console.WriteLine('  Writing Json file schema: {0}_{1}', LibraryName, FileObj.File.ToLower())
+            OutputFile = *This.OutputPath + String.Format('{0}.{1}.json', LibraryName, FileObj.File.ToLower())        
+            Console.WriteLine('  Writing Json file schema: {0}.{1}', LibraryName, FileObj.File.ToLower())
             File.WriteAllText(OutputFile, Json, Encoding.UTF8) 
 
             If SQLServerDBName <> String.Empty AND FileObj.type = 'physical' 
