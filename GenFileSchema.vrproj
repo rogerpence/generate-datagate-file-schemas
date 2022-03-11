@@ -51,9 +51,6 @@
       <RequiredTargetFramework>4.0</RequiredTargetFramework>
     </Reference>
     <Reference Include="System.Xml" />
-    <Reference Include="YamlDotNet">
-      <HintPath>..\..\..\..\..\..\Downloads\yamldotnet.11.2.1\lib\net45\YamlDotNet.dll</HintPath>
-    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Class1.vr" />

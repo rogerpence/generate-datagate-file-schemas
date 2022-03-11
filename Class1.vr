@@ -105,11 +105,11 @@ BegClass MainPgm Access(*Public)
 
             // The YAML option is disabled and probably won't be added back. 
             // The YAML serialization of the fields list is flawed. 
-            If CmdLine.YAML
-                ow.WriteYaml(FileList) 
-            Else
+            //If CmdLine.YAML
+                //ow.WriteYaml(FileList) 
+            //Else
                 ow.WriteJson(FileList)
-            EndIf 
+            //EndIf 
         EndFor 
     EndSr                
 

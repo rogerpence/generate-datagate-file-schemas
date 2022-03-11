@@ -64,27 +64,27 @@ BegClass ObjectWriter
         EndFor 
     EndSr
 
-    BegSr WriteYaml Access(*Public) 
-        DclSrParm FileList Type(List(*Of DataGateFile)) 
-
-        DclFld Yaml Type(*String) 
-        DclFld OutputFile Type(*String) 
-
-        DclFld YamlSerializer Type(ISerializer) 
-
-        ForEach FileObj Type(DataGateFile) Collection(FileList) 
-            YamlSerializer = *New SerializerBuilder().Build()
-            Yaml = YamlSerializer.Serialize(FileObj) 
-
-            If *this.isFirstFile
-                CustomConsole.WriteLineSuccess('Output folder: {0}', *This.OutputPath) 
-                *This.isFirstFile = *False  
-            EndIf 
-
-            OutputFile = *This.OutputPath + String.Format('{0}_{1}.yaml', FileObj.Library.ToLower(), FileObj.File.ToLower())
-            CustomConsole.WriteLineInfo('  Writing yaml file schema: {0}_{1}', FileObj.Library.ToLower(), FileObj.File.ToLower())
-            File.WriteAllText(OutputFile, Yaml, Encoding.UTF8) 
-        EndFor 
-    EndSr
+//    BegSr WriteYaml Access(*Public) 
+//        DclSrParm FileList Type(List(*Of DataGateFile)) 
+//
+//        DclFld Yaml Type(*String) 
+//        DclFld OutputFile Type(*String) 
+//
+//        DclFld YamlSerializer Type(ISerializer) 
+//
+//        ForEach FileObj Type(DataGateFile) Collection(FileList) 
+//            YamlSerializer = *New SerializerBuilder().Build()
+//            Yaml = YamlSerializer.Serialize(FileObj) 
+//
+//            If *this.isFirstFile
+//                CustomConsole.WriteLineSuccess('Output folder: {0}', *This.OutputPath) 
+//                *This.isFirstFile = *False  
+//            EndIf 
+//
+//            OutputFile = *This.OutputPath + String.Format('{0}_{1}.yaml', FileObj.Library.ToLower(), FileObj.File.ToLower())
+//            CustomConsole.WriteLineInfo('  Writing yaml file schema: {0}_{1}', FileObj.Library.ToLower(), FileObj.File.ToLower())
+//            File.WriteAllText(OutputFile, Yaml, Encoding.UTF8) 
+//        EndFor 
+//    EndSr
 EndClass 
 

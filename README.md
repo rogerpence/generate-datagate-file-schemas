@@ -1,15 +1,12 @@
-
-> table/file and column/field note here
-
 Writing business applications requires writing tons of complex, specialized code. It also requires writing tons of repetitive, boring, mechanical code. To be effective coders, you need to maximize the time you spend on custom, unique code and minimize the time you spend on repetitive, repeatable code. Let's spend a little thinking about how to generate that repeatable code.
 
 By "repeatable code" I mean things like 
 
-* standard Create/Read/Update/Delete operations
-* code to populate paged lists for displaying data
-* file and data structure declarations 
-* input panel creation for Web or Windows apps
-* code to populate dropdown lists
+* Standard Create/Read/Update/Delete operations
+* Code to populate paged lists for displaying data
+* File and data structure declarations 
+* Input panel creation for Web or Windows apps
+* Code to populate dropdown lists
 
 By standardizing these common processes, not only do you make them available quickly, but you also make them available reliably. Code produced with a tested, solid template reduces testing and Q/A time and ensures correctness. 
 
@@ -21,49 +18,58 @@ To generate these repeatable chunks of code, we need:
 
 3. A flexible template engine that lets you create templates that produce AVR, C#, SQL, HTML, Markdown, ASPX, MVC or other Web markup, or any other output type that you need.  
 
+This repo tackles the first part of the challenge, producing meta data about DataGate files. 
 
-#### Step 1. Producing reliable meta data
 
-`GenFileSchema` is an AVR program that produces a Json (or Yaml) file that describes a data file in a given library. It was written with AVR 15.x but should work with versions down to about AVR 12.x and up.
+#### Producing reliable meta data
+
+`GenFileSchema` is an AVR program that produces a Json file (a schema file) that describes each data files in a given library. It was written with AVR 15.x but should work with versions down to about AVR 12.x and up.
 
 `GenFileSchema` is a command line application. After installing it, type `GenFileSchema` on the command line and press enter. The screen of text below is shown. (You can also see this screen using the --help or -h flag.)
 
+```
+Generate DataGate file schemas for a library
 
+Flag                  ShortHand  Required  Description
+--------------------  ---------  --------  ---------------------------------------------
+--databasename           -d        True    DateGate Database Name
+--library                -l        True    Library name
+--outputpath             -o        False   Output path (appended to output path selected--see below)
+--physicalsonly          -po       False   Process physical files only (default is false)
+--help                   -h                Show this help
 
-    Generate DataGate file schemas for a library
+The default schema output path root is:
+    C:\Users\roger\Documents
+That default can be overridden in the 'TargetFolderRoot' of the app config file.
+The full schema output path is the output path plus the --outputpath/-op path. That path must exist.path. 
+```
 
-    Flag                  ShortHand  Required  Description
-    --------------------  ---------  --------  ---------------------------------------------
-    --databasename           -d        True    Database Name
-    --library                -l        True    Library name (or *LIBL if using a library list)
-    --outputpath             -op       False   output path (appended to the user's Documents folder)
-    --yaml                   -y        False   Write schema in YAML instead of Json
-    --pause                  -p        False   Pause the screen after processing
-    --help                   -h                Show this help
+The default schema output path is `c:\users\[user]documents` but that path can be overridden with the `TargetFolderRoot` key in the `app.config` file.
 
-    The default schema output path is:
-    C:\Users\roger\Documents\Programming\_AVR\rpUtilities\librettox\template_work\schemas
-    The default output path is the user's Document path plus what is defined in the 'app.config' file.
-    To change the output path at runtime, the --outputpath arg is appended to the user's Documents path.
-    The runtime output path must exist.
-
-The default output path is defined in the program's `app.config` file, but it can be overridden with the `--outputpath/-op` flags.
-
+```
     <appSettings>
-        <add key="defaultOutputPath"
-             value="Programming\_AVR\rpUtilities\librettox\template_work\schema"
+        <add key="TargetFolderRoot"
+             value="..."
         />
     </appSettings>   
+```
 
-asdfasdfasdf
+>To make this change within Visual Studio, make the change to the `app.config` file and recompile the app. If you want to change this path without recompiling the program,  _carefully_ change the `GenFileSchema.exe.config` file (which is essentially the runtime version of `app.config`.) This file is in the same folder as the `GenFileSchema.exe.` Note that changes made to `GenFileSchema.exe.config` file are overwritten the next time you compile the app.  
 
+### Using the program
 
-    genfileschema -d "*Public/DG NET Local" -l devo
+To produce Json schema files for all of the files in the `Devo` library in the database defined by the `*Public/DG NET Local` database name: 
 
+```
+genfileschema -d "*Public/DG NET Local" -l devo -o devo 
+```
 
-Produces     
+By default, this produces the Json files in the `c:\users\[user]documents\devo` directory.
 
-    {
+The files produced look like this:
+
+```
+{
     "dbname": "*public/dg net local",
     "library": "devo",
     "file": "states",
@@ -148,35 +154,13 @@ Produces
         "sqlserverprimarykey": ""
         }
     ]
-    }
+}
+```
 
 
+### File-level tokens
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-## File-level tokens
-
+```
 dbname................... Database name
 library.................. Library name
 file..................... File name
@@ -188,12 +172,13 @@ keylength................ Key length
 basefile................. Base file (logical files only)
 duplicatekeys............ Are duplicated keys allowed
 sqlserveruniqueindex..... 'unique' if index is unique
-alias.................... File alias (initially the same as 'file')
+alias.................... File alias (same as 'file')
 keyfieldslist............ Comma-separated list of key fields
 allfieldslist............ Comma-separated list of all fields
+```
 
 ### Field-level tokens
-
+```
 name..................... Field
 description.............. Description 
 alias.................... Field alias (initially the same as 'name')
@@ -208,82 +193,4 @@ allownull................ Allow nulls (True or False)
 sqlservertype............ SQL Server type 
 sqlservernull............ Nullable
 sqlserverprimarykey...... 'PRIMARY KEY' if field is part of primary key
-
-### Field lists
-
-There are three groups of fields available:
-
-* fields........ All of the fields in the file
-* keyfields..... The key fields in the file
-* nonkeyfields.. The non-key fields in the file
-
-In a template, these groups can be iterated to generate code. For example, let's say you want to generate a simple class with each field in the file as a property. 
-
-This template:
-
-    Using System 
-
-    DclNamespace MyNamespace 
-
-    BegClass {{file}}_buffer Access(*Public)
-        {% for field in fields %}
-        DclProp {{field.name}} {{field.fulltype}} Access(*Public) 
-        {% endfor %}
-    EndClass
-
-Generates this code:
-
-    Using System 
-
-    DclNamespace MyNamespace 
-
-    BegClass cmastnewl2_buffer Access(*Public)
-        DclProp cmcustno Type(*packed) Len(9,0) Access(*Public) 
-        DclProp cmname Type(*char) Len(40) Access(*Public) 
-        DclProp cmaddr1 Type(*char) Len(35) Access(*Public) 
-        DclProp cmcity Type(*char) Len(30) Access(*Public) 
-        DclProp cmstate Type(*char) Len(2) Access(*Public) 
-        DclProp cmcntry Type(*char) Len(2) Access(*Public) 
-        DclProp cmpostcode Type(*char) Len(10) Access(*Public) 
-        DclProp cmactive Type(*char) Len(1) Access(*Public) 
-        DclProp cmfax Type(*packed) Len(10,0) Access(*Public) 
-        DclProp cmphone Type(*char) Len(20) Access(*Public) 
-    EndClass
-
-Let's say that you'd like to generate the class above, but you want to separate the key fields from the non-key fields (it's a contrived example, I know!). You could do that with this template: 
-
-    Using System 
-
-    DclNamespace MyNamespace 
-
-    BegClass {{file}}_buffer Access(*Public)
-        {% for field in keyfields %}
-        DclProp {{field.name}} {{field.fulltype}} Access(*Public) 
-        {% endfor %}
-
-        {% for field in nonkeyfields %}
-        DclProp {{field.name}} {{field.fulltype}} Access(*Public) 
-        {% endfor %}
-    EndClass
-
-Which generates this code:
-
-    Using System 
-
-    DclNamespace MyNamespace 
-
-    BegClass cmastnewl2_buffer Access(*Public)
-        DclProp cmname Type(*char) Len(40) Access(*Public) 
-        DclProp cmcustno Type(*packed) Len(9,0) Access(*Public) 
-
-        DclProp cmaddr1 Type(*char) Len(35) Access(*Public) 
-        DclProp cmcity Type(*char) Len(30) Access(*Public) 
-        DclProp cmstate Type(*char) Len(2) Access(*Public) 
-        DclProp cmcntry Type(*char) Len(2) Access(*Public) 
-        DclProp cmpostcode Type(*char) Len(10) Access(*Public) 
-        DclProp cmactive Type(*char) Len(1) Access(*Public) 
-        DclProp cmfax Type(*packed) Len(10,0) Access(*Public) 
-        DclProp cmphone Type(*char) Len(20) Access(*Public) 
-    EndClass
-
-Notice that blank lines are significant in templates. In the template above, there is a blank line between key fields and non-key fields. Also, notice the subtle difference in field order between these two examples. When you iterate the `fields` collection the fields are listed in the order in which they occur in the file definition. When you iterate the `keyfields` collection, the keys are listed in the key definition order. 
+```
