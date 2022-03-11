@@ -1,0 +1,48 @@
+﻿Using System
+Using System.Text
+Using System.Collections.Generic
+Using System.Collections 
+
+DclNamespace GenFileSchema
+
+BegClass StaticHelpers Access(*Public)
+
+    BegFunc PathJoin Type(*String) Shared(*Yes) Access(*Public) 
+        DclSrParm Path1 Type(*String) 
+        DclSrParm Path2 Type(*String) 
+
+        If Path2.StartsWith('\') 
+            Leavesr Path1 + Path2
+        Else
+            LeaveSr Path1 + '\' + Path2 
+        EndIf 
+    EndFunc 
+
+    BegFunc ConvertArrayListToArray Type(*String) Rank(1) Shared(*Yes) Access(*Public) 
+        DclSrParm Libraries Type(ArrayList)
+
+        DclFld Members Type(List(*of String)) New()
+
+        ForEach Library Type(*String) Collection(Libraries) 
+            Members.Add(Library)
+        EndFor 
+
+        LeaveSr Members.ToArray()       
+    EndFunc 
+
+    BegFunc GetFileSchemaAsJson Type(*String) Shared(*Yes) Access(*Public) 
+        DclSrParm DBName Type(*String) 
+        DclSrParm Library Type(*String) 
+        DclSrParm FileName Type(*String) 
+
+        DclFld g Type(GenFileDescription) New()
+        DclFld f Type(FileDef) 
+        DclFld Json Type(*String) 
+       
+        f = g.Generate(DBName, Library, FileName) 
+        Json = NewtonSoft.Json.JsonConvert.SerializeObject(f, Newtonsoft.Json.Formatting.Indented)
+
+        LeaveSr Json 
+	EndFunc 
+
+EndClass

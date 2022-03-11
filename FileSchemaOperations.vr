@@ -1,0 +1,88 @@
+﻿Using System
+Using System.Text
+Using System.Collections.Generic
+Using System.IO
+
+DclNamespace GenFileSchema
+
+BegClass FileSchemaOperations
+    DclFld OutputPath Type(*String) 
+    DclFld isFirstFile Type(*Boolean) Inz(*True) 
+
+    BegConstructor Access(*Public) 
+        DclSrParm TargetDirectory Type(*String) 
+
+        If NOT TargetDirectory.EndsWith('\') 
+            TargetDirectory = TargetDirectory + '\'
+        EndIf 
+
+    EndConstructor 
+
+    BegSr WriteFileSchemaAsJson Access(*Public) 
+        DclSrParm DBName Type(*String) 
+        DclSrParm Library Type(*String) 
+        DclSrParm FileName Type(*String) 
+
+        DclFld Json Type(*String) 
+        DclFld OutputFile Type(*String) 
+        
+        Json = StaticHelpers.GetFileSchemaAsJson(DBName, Library, FileName)
+
+        If *this.isFirstFile
+            Console.WriteLine('Output folder: {0}', *This.OutputPath) 
+            *This.isFirstFile = *False  
+        EndIf 
+
+        OutputFile = *This.OutputPath + String.Format('{0}_{1}.json', Library.ToLower(), FileName.ToLower())
+        
+        Console.WriteLine('  Writing Json file schema: {0}_{1}', Library, FileName)        
+        File.WriteAllText(OutputFile, Json, Encoding.UTF8) 
+    EndSr
+
+    BegFunc GetFileList Type(List(*Of DataGateFile)) Access(*Public) 
+        DclSrParm DBName Type(*String) 
+        DclSrParm Library Type(*String) 
+        DclSrParm PhysicalsOnly Type(*Boolean) 
+
+        DclFld LibOps Type(DataGateLibraryOperations) New()
+        DclFld DGFileOperations Type(DataGateFileOperations) New()
+        DclFld FileNameList Type(List(*Of *String)) New()
+        DclFld FileList Type(List(*Of DataGateFile)) New()
+        DclFld DGFile Type(DataGateFile)
+        
+        FileNameList = LibOps.GetFiles(DBName, Library)
+
+        ForEach FileName Type(*String) Collection(FileNameList) 
+            DGFile = DGFileOperations.GetFileObject(DBName, Library, FileName)   
+               
+            If PhysicalsOnly 
+                If DGFile.Type.ToLower() = 'physical' 
+                    FileList.Add(DGFile)
+                EndIf
+            Else 
+                If DGFile.Type.ToLower() = 'physical' OR DGFile.Type.ToLower().Contains('logical')  
+                    FileList.Add(DGFile)
+                EndIf 
+            EndIf 
+
+        EndFor 
+
+        LeaveSr FileList 
+    EndFunc 
+
+//    BegFunc GetFileSchemaAsJson Type(*String) 
+//        DclSrParm DBName Type(*String) 
+//        DclSrParm Library Type(*String) 
+//        DclSrParm FileName Type(*String) 
+//
+//        DclFld g Type(GenFileDescription) New()
+//        DclFld f Type(FileDef) 
+//        DclFld Json Type(*String) 
+//       
+//        f = g.Generate(DBName, Library, FileName) 
+//        Json = NewtonSoft.Json.JsonConvert.SerializeObject(f, Newtonsoft.Json.Formatting.Indented)
+//
+//        LeaveSr Json 
+//	EndFunc 
+
+EndClass

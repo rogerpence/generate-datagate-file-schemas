@@ -1,0 +1,99 @@
+﻿Using System
+Using System.Text
+Using System.Collections.Generic
+using YamlDotNet.Serialization
+using YamlDotNet.Samples.Helpers
+Using System.Text.RegularExpressions
+Using System.IO 
+
+
+
+DclNamespace GenFileSchema
+
+BegClass ObjectWriter
+    DclFld OutputPath Type(*String) 
+    DclFld isFirstFile Type(*Boolean) Inz(*True) 
+
+    BegFunc GetPureAscii Type(*String) 
+        DclSrParm InputString Type(*String) 
+
+        // This gets the first 127 ASCII values. The IBM i sometimes produces a \u0080 value instead of 
+        // \u0020 (a space) in trailing blanks. I've only see this happen, sometimes, with the field's
+        // description. I don't know why it's intermittment--and I don't care! This ensures nothing 
+        // but the first 127 ASCII characters are included in the Json. BTW, ASCII 128 is \u0080.
+        LeaveSr Regex.Replace(InputString, "[^\u0000-\u007F]+", string.Empty)
+    EndFunc
+
+    BegConstructor Access(*Public) 
+        DclSrParm TargetDirectory Type(*String) 
+
+        If NOT TargetDirectory.EndsWith('\') 
+            TargetDirectory = TargetDirectory + '\'
+        EndIf 
+        *This.OutputPath = TargetDirectory 
+    EndConstructor 
+
+    BegSr WriteJson Access(*Public) 
+        DclSrParm FileList Type(List(*Of DataGateFile)) 
+        DclSrParm SQLServerDBName Type(*String) 
+
+        DclFld Json Type(*String) 
+        DclFld OutputFile Type(*String) 
+        DclFld LibraryName Type(*String) 
+        DclFld SqlToCreateTable Type(*String) 
+
+        ForEach FileObj Type(DataGateFile) Collection(FileList) 
+            Json = NewtonSoft.Json.JsonConvert.SerializeObject(FileObj, Newtonsoft.Json.Formatting.Indented)
+            // File meta data from the IBM i sometimes has trailing high-order characters. Strip those off. 
+            // I've only see this occur in the trailing characters of the field description. 
+            Json = GetPureAscii(Json) 
+
+            If *this.isFirstFile
+                Console.WriteLine('Output folder: {0}', *This.OutputPath) 
+                *This.isFirstFile = *False  
+            EndIf 
+
+            If FileObj.library = "/" 
+                LibraryName = "#root"
+            Else
+                LibraryName = FileObj.library.ToLower()
+            EndIf 
+
+            OutputFile = *This.OutputPath + String.Format('{0}.{1}.json', LibraryName, FileObj.File.ToLower())        
+            Console.WriteLine('  Writing Json file schema: {0}.{1}', LibraryName, FileObj.File.ToLower())
+            File.WriteAllText(OutputFile, Json, Encoding.UTF8) 
+
+            If SQLServerDBName <> String.Empty AND FileObj.type = 'physical' 
+                SqlToCreateTable = SqlOperations.WriteSQLSchema(FileObj, SQLServerDBName) 
+                OutputFile = *This.OutputPath + String.Format('create_table_{0}_{1}.sql', LibraryName, FileObj.File.ToLower())        
+                Console.WriteLine('  Writing SQL to create file: {0}_{1}', LibraryName, FileObj.File.ToLower())
+                File.WriteAllText(OutputFile, SqlToCreateTable, Encoding.UTF8) 
+            EndIf 
+        EndFor 
+    EndSr
+
+    BegSr WriteYaml Access(*Public) 
+        DclSrParm FileList Type(List(*Of DataGateFile)) 
+
+        DclFld Yaml Type(*String) 
+        DclFld OutputFile Type(*String) 
+
+        DclFld YamlSerializer Type(ISerializer) 
+
+        ForEach FileObj Type(DataGateFile) Collection(FileList) 
+            YamlSerializer = *New SerializerBuilder().Build()
+            Yaml = YamlSerializer.Serialize(FileObj) 
+
+            If *this.isFirstFile
+                Console.WriteLine('Output folder: {0}', *This.OutputPath) 
+                *This.isFirstFile = *False  
+            EndIf 
+
+            OutputFile = *This.OutputPath + String.Format('{0}_{1}.yaml', FileObj.Library.ToLower(), FileObj.File.ToLower())
+        
+            Console.WriteLine('  Writing yaml file schema: {0}_{1}', FileObj.Library.ToLower(), FileObj.File.ToLower())
+            File.WriteAllText(OutputFile, Yaml, Encoding.UTF8) 
+        EndFor 
+    EndSr
+EndClass 
+

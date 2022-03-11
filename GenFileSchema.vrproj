@@ -57,6 +57,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Class1.vr" />
+    <Compile Include="CommandLineArgs.vr">
+      <SubType>
+      </SubType>
+    </Compile>
     <Compile Include="DataGateFile.vr">
       <SubType>
       </SubType>
@@ -81,12 +85,24 @@
       <SubType>
       </SubType>
     </Compile>
+    <Compile Include="FileSchemaOperations.vr">
+      <SubType>
+      </SubType>
+    </Compile>
     <Compile Include="GetFileDescription.vr">
+      <SubType>
+      </SubType>
+    </Compile>
+    <Compile Include="ObjectWriter.vr">
       <SubType>
       </SubType>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.vr" />
     <Compile Include="SQLOperations.vr">
+      <SubType>
+      </SubType>
+    </Compile>
+    <Compile Include="StaticHelpers.vr">
       <SubType>
       </SubType>
     </Compile>
