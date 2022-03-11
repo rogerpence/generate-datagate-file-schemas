@@ -6,7 +6,7 @@ Using System.Text
 Using System.Text.RegularExpressions
 Using System.Xml
 Using System.IO
-Using NewtonSoftph
+Using NewtonSoft
 using YamlDotNet.Serialization
 using YamlDotNet.Samples.Helpers
 using CommandLineUtility
@@ -27,7 +27,6 @@ BegClass MainPgm Access(*Public)
 
         DclFld RootPath Type(*String) 
         DclFld TargetFolder Type(*String) 
-        DclFld ow Type(ObjectWriter) 
 
         DclFld CmdLine Type(CommandLineArgs) New()
         DclFld cam Type(CmdArgManager) 
@@ -68,12 +67,22 @@ BegClass MainPgm Access(*Public)
         Else 
             Libraries = LibOps.GetLibraries(CmdLine.DatabaseName)
         EndIf 
+
+        GenerateSchemas(CmdLine, Libraries, TargetFolder, RootPath) 
+    EndSr
+        
+    BegSr GenerateSchemas
+        DclSrParm CmdLine Type(CommandLineArgs) 
+        DclSrParm Libraries  Type(*String) Rank(1) 
+        DclSrParm TargetFolder Type(*String) 
+        DclSrParm RootPath Type(*String) 
         
         // Search for this text "Save XML to disk"
         // in the GetFileDescriptionClass to write XML file disk.
 
         DclFld FileList Type(List(*Of DataGateFile)) 
         DclFld fso Type(FileSchemaOperations) 
+        DclFld ow Type(ObjectWriter) 
 
         If CmdLine.PhysicalsOnly
             CustomConsole.WriteLineInfo('Processing only physical files')
