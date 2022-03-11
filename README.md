@@ -30,7 +30,7 @@ This project requires
 
 ### Producing reliable meta data
 
-`GenFileSchema` is an AVR program that produces a Json file (a schema file) that describes each data files in a given library. It was written with AVR 15.x but should work with versions down to about AVR 12.x and up.
+`GenFileSchema` is an AVR program that produces a Json file (a schema file) that describes each data file in a given library. It was written with AVR 15.x but should work with versions down to about AVR 12.x and anything higher than AVR 15.x.
 
 `GenFileSchema` is a command line application. After installing it, type `GenFileSchema` on the command line and press enter. The screen of text below is shown. (You can also see this screen using the --help or -h flag.)
 
