@@ -24,8 +24,8 @@ This repo tackles the first part of the challenge, producing meta data about Dat
 
 This project requires 
 
-* The DLL produced by this project https://github.com/rogerpence/ArgyBargy* 
-* The NewtonSoft.json DLL from this project at [Nuget.org](Nuget.org):
+* The DLL produced by this project https://github.com/rogerpence/ArgyBargy 
+* The NewtonSoft.json DLL from this project at [Nuget.org](https://www.nuget.org/):
   * https://www.nuget.org/packages/Newtonsoft.Json/
 
 ### Producing reliable meta data
