@@ -20,8 +20,15 @@ To generate these repeatable chunks of code, we need:
 
 This repo tackles the first part of the challenge, producing meta data about DataGate files. 
 
+### Project dependencies
 
-#### Producing reliable meta data
+This project requires 
+
+* The DLL produced by this project https://github.com/rogerpence/ArgyBargy* 
+* The NewtonSoft.json DLL from this project at [Nuget.org](Nuget.org):
+  * https://www.nuget.org/packages/Newtonsoft.Json/
+
+### Producing reliable meta data
 
 `GenFileSchema` is an AVR program that produces a Json file (a schema file) that describes each data files in a given library. It was written with AVR 15.x but should work with versions down to about AVR 12.x and up.
 
@@ -49,7 +56,7 @@ The default schema output path is `c:\users\[user]documents` but that path can b
 ```
     <appSettings>
         <add key="TargetFolderRoot"
-             value="..."
+             value="c:\somewhere..."
         />
     </appSettings>   
 ```
@@ -194,3 +201,9 @@ sqlservertype............ SQL Server type
 sqlservernull............ Nullable
 sqlserverprimarykey...... 'PRIMARY KEY' if field is part of primary key
 ```
+
+### What can I do with the Json schema files
+
+The Json schema files can be used by any Json-capable tool to do whatever you can dream up. 
+
+For example, using [Python](https://www.python.org/) with the [Jinja](https://jinja.palletsprojects.com/en/3.0.x/) template engine provides some interesting opportunities. [See this GitHub repo for more information.]()https://github.com/rogerpence/LibrettoX
