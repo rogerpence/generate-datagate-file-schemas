@@ -7,34 +7,27 @@ DclNamespace GenFileSchema
 
 BegClass CommandLineArgs Access(*Public) 
 
+    DclFld YAML Type(*Boolean) Inz(*False) Access(*Public)
+
     DclProp DatabaseName Type(*String) Access(*Public) +
-                         Attributes(CmdArg("--databasename", "-d", *True,  "Database Name"))
+                         Attributes(CmdArg("--databasename", "-d", *True,  "DateGate Database Name"))
 
     DclProp LibraryName Type(*String)  Access(*Public) +
-                         Attributes(CmdArg("--library", "-l", *True, "Library name (or *All for all libraries)"))
+                         Attributes(CmdArg("--library", "-l", *True, "Library name"))
 
     DclProp OutputPath Type(*String)  Access(*Public) +
-                         Attributes(CmdArg("--outputpath", "-op", *False, "output path (appended to the user's Documents folder)"))
+                         Attributes(CmdArg("--outputpath", "-o", *False, "Output path (appended to output path selected--see below)"))
 
-    DclProp YAML Type(*Boolean)  Access(*Public) +
-                         Attributes(CmdArg("--yaml", "-y", *False, "Write schema in YAML instead of Json"))       
-
-    DclProp Pause Type(*Boolean)  Access(*Public) +
-                         Attributes(CmdArg("--pause", "-p", *False, "Pause the screen after processing"))
+//    DclProp YAML Type(*Boolean)  Access(*Public) +
+//                         Attributes(CmdArg("--yaml", "-y", *False, "Write schema in YAML instead of Json"))       
 
     DclProp PhysicalsOnly Type(*Boolean)  Access(*Public) +
                          Attributes(CmdArg("--physicalsonly", "-po", *False, "Process physical files only (default is false)"))
 
-    DclProp SQLServerDB Type(*String)  Access(*Public) +
-                         Attributes(CmdArg("--sqlserverdb", "-sdb", *False, "SQL Server database name for CREATE TABLE SQL"))
-
                              
     BegConstructor Access(*Public) 
-        *This.Pause = *False 
-        //*This.OutputPath = System.Configuration.ConfigurationManager.AppSettings['defaultOutputPath']
         *This.OutputPath = String.Empty
         *This.PhysicalsOnly = *False
-        *This.SQLServerDB = String.Empty 
     EndConstructor 
 EndClass
 

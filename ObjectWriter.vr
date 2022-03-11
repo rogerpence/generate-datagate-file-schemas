@@ -5,6 +5,7 @@ using YamlDotNet.Serialization
 using YamlDotNet.Samples.Helpers
 Using System.Text.RegularExpressions
 Using System.IO 
+using CommandLineUtility
 
 
 
@@ -35,12 +36,10 @@ BegClass ObjectWriter
 
     BegSr WriteJson Access(*Public) 
         DclSrParm FileList Type(List(*Of DataGateFile)) 
-        DclSrParm SQLServerDBName Type(*String) 
 
         DclFld Json Type(*String) 
         DclFld OutputFile Type(*String) 
         DclFld LibraryName Type(*String) 
-        DclFld SqlToCreateTable Type(*String) 
 
         ForEach FileObj Type(DataGateFile) Collection(FileList) 
             Json = NewtonSoft.Json.JsonConvert.SerializeObject(FileObj, Newtonsoft.Json.Formatting.Indented)
@@ -49,7 +48,7 @@ BegClass ObjectWriter
             Json = GetPureAscii(Json) 
 
             If *this.isFirstFile
-                Console.WriteLine('Output folder: {0}', *This.OutputPath) 
+                CustomConsole.WriteLineSuccess('Output folder: {0}', *This.OutputPath) 
                 *This.isFirstFile = *False  
             EndIf 
 
@@ -59,16 +58,9 @@ BegClass ObjectWriter
                 LibraryName = FileObj.library.ToLower()
             EndIf 
 
-            OutputFile = *This.OutputPath + String.Format('{0}.{1}.json', LibraryName, FileObj.File.ToLower())        
-            Console.WriteLine('  Writing Json file schema: {0}.{1}', LibraryName, FileObj.File.ToLower())
+            OutputFile = *This.OutputPath + String.Format('{0}.{1}.json', LibraryName, FileObj.File.ToLower())    
+            CustomConsole.WriteLineInfo('  Writing Json file schema: {0}.{1}', LibraryName, FileObj.File.ToLower())
             File.WriteAllText(OutputFile, Json, Encoding.UTF8) 
-
-            If SQLServerDBName <> String.Empty AND FileObj.type = 'physical' 
-                SqlToCreateTable = SqlOperations.WriteSQLSchema(FileObj, SQLServerDBName) 
-                OutputFile = *This.OutputPath + String.Format('create_table_{0}_{1}.sql', LibraryName, FileObj.File.ToLower())        
-                Console.WriteLine('  Writing SQL to create file: {0}_{1}', LibraryName, FileObj.File.ToLower())
-                File.WriteAllText(OutputFile, SqlToCreateTable, Encoding.UTF8) 
-            EndIf 
         EndFor 
     EndSr
 
@@ -85,13 +77,12 @@ BegClass ObjectWriter
             Yaml = YamlSerializer.Serialize(FileObj) 
 
             If *this.isFirstFile
-                Console.WriteLine('Output folder: {0}', *This.OutputPath) 
+                CustomConsole.WriteLineSuccess('Output folder: {0}', *This.OutputPath) 
                 *This.isFirstFile = *False  
             EndIf 
 
             OutputFile = *This.OutputPath + String.Format('{0}_{1}.yaml', FileObj.Library.ToLower(), FileObj.File.ToLower())
-        
-            Console.WriteLine('  Writing yaml file schema: {0}_{1}', FileObj.Library.ToLower(), FileObj.File.ToLower())
+            CustomConsole.WriteLineInfo('  Writing yaml file schema: {0}_{1}', FileObj.Library.ToLower(), FileObj.File.ToLower())
             File.WriteAllText(OutputFile, Yaml, Encoding.UTF8) 
         EndFor 
     EndSr

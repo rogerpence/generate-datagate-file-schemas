@@ -23,6 +23,7 @@ BegClass MainPgm Access(*Public)
         DclSrParm args Type(*String) Rank(1) 
 
         DclFld TargetFolder Type(*String) 
+        DclFld TargetFolderRoot Type(*String) 
 
         DclFld CmdLine Type(CommandLineArgs) New()
         DclFld cam Type(CmdArgManager) 
@@ -45,23 +46,27 @@ BegClass MainPgm Access(*Public)
 
         Console.WriteLine('Working...') 
 
-        DclFld UserDocsPath Type(*String) 
-        DclFld DefaultPathRoot Type(*String) 
-       
-        UserDocsPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)
-        DefaultPathRoot = System.Configuration.ConfigurationManager.AppSettings['defaultOutputPath']
-        TargetFolder = System.IO.Path.Combine(UserDocsPath, DefaultPathRoot, CmdLine.OutputPath) 
+      
+        If System.Configuration.ConfigurationManager.AppSettings['TargetFolderRoot'] = *Nothing 
+            TargetFolderRoot = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)        
+        Else 
+            TargetFolderRoot = System.Configuration.ConfigurationManager.AppSettings['TargetFolderRoot']
+        EndIf            
+
+        TargetFolder = StaticHelpers.PathJoin(TargetFolderRoot, CmdLine.OutputPath) 
                 
         If NOT Directory.Exists(TargetFolder) 
-            CustomConsole.WriteLineError('Target directory [{0}] does not exist', TargetFolder) 
+            CustomConsole.WriteLineError('Output target directory [{0}] does not exist', TargetFolder) 
             LeaveSr 
         EndIf 
 
-        If CmdLine.LibraryName.ToLower() <> '*all'
+// Processing all libraries is disabled. It works, but it's too messy 
+// handling where to put output files. 
+//        If CmdLine.LibraryName.ToLower() <> '*all'
             Libraries = *new *String[] {CmdLine.LibraryName}
-        Else 
-            Libraries = LibOps.GetLibraries(CmdLine.DatabaseName)
-        EndIf 
+//        Else 
+//            Libraries = LibOps.GetLibraries(CmdLine.DatabaseName)
+//        EndIf 
 
         GenerateSchemas(CmdLine, Libraries, TargetFolder)
     EndSr
@@ -81,7 +86,7 @@ BegClass MainPgm Access(*Public)
         If CmdLine.PhysicalsOnly
             CustomConsole.WriteLineInfo('Processing only physical files')
         Else 
-            CustomConsole.WriteLineInfo('Processing only physical and logical files')
+            CustomConsole.WriteLineInfo('Processing physical and logical files')
         EndIf 
 
         ForEach Library Type(*String) Collection(Libraries)         
@@ -98,17 +103,14 @@ BegClass MainPgm Access(*Public)
         
             ow = *New ObjectWriter(TargetFolder) 
 
+            // The YAML option is disabled and probably won't be added back. 
+            // The YAML serialization of the fields list is flawed. 
             If CmdLine.YAML
                 ow.WriteYaml(FileList) 
             Else
-                ow.WriteJson(FileList, CmdLine.SQLServerDB)
+                ow.WriteJson(FileList)
             EndIf 
         EndFor 
-
-        If CmdLine.Pause
-            Console.WriteLine('Press any key to continue...') 
-            Console.ReadKey()
-        EndIf 
     EndSr                
 
     BegSr HelpShownHandler 
@@ -116,17 +118,31 @@ BegClass MainPgm Access(*Public)
         DclSrparm e Type(ShowHelpEventArgs) 
 
         DclFld CmdLine Type(CommandLineArgs) 
-        DclFld RootPath Type(*String) 
+        DclFld TargetFolderRoot Type(*String)
+        DclFld TargetFolderRootOverride Type(*Boolean) 
 
         CmdLine = e.CmdArgs *As CommandLineArgs 
 
-        RootPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)
+        If System.Configuration.ConfigurationManager.AppSettings['TargetFolderRoot'] = *Nothing 
+            TargetFolderRoot = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)        
+            TargetFolderRootOverride = *False
+        Else 
+            TargetFolderRoot = System.Configuration.ConfigurationManager.AppSettings['TargetFolderRoot']
+            TargetFolderRootOverride = *True
+        EndIf            
+
         CustomConsole.WriteLineInfo(String.Empty)
-        CustomConsole.WriteLineInfo("The default schema output path is:") 
-        CustomConsole.WriteLineInfo("  " + StaticHelpers.PathJoin(RootPath, CmdLine.OutputPath))
-        CustomConsole.WriteLineInfo("The default output path is the user's Document path plus what is defined in the 'app.config' file.")
-        CustomConsole.WriteLineInfo("To change the output path at runtime, the --outputpath arg is appended to the user's Documents path")
-        CustomConsole.WriteLineInfo("plus the path in 'app.config'. The output path must exist.")
+        CustomConsole.WriteLineInfo("The default schema output path root is: ")
+        CustomConsole.WriteLineSuccess("    " + Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)) 
+        
+        If TargetFolderRootOverride
+            CustomConsole.WriteLineInfo("However, that default is overridden in the 'TargetFolderRoot' key of the app config file to:")
+            CustomConsole.WriteLineSuccess("    " + TargetFolderRoot) 
+        Else
+            CustomConsole.WriteLineInfo("That default can be overridden in the 'TargetFolderRoot' of the app config file.")
+        EndIf 
+
+        CustomConsole.WriteLineInfo("The full schema output path is the output path plus the --outputpath/-op path. That path must exist.") 
     EndSr 
 
 EndClass
