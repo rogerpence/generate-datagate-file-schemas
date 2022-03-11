@@ -28,6 +28,8 @@ This project requires
 * The NewtonSoft.json DLL from this project at [Nuget.org](https://www.nuget.org/):
   * https://www.nuget.org/packages/Newtonsoft.Json/
 
+Schemas can be produced on any Windows PC with AVR runtime installed and a DataGate database connection available. 
+
 ### Producing reliable meta data
 
 `GenFileSchema` is an AVR program that produces a Json file (a schema file) that describes each data file in a given library. It was written with AVR 15.x but should work with versions down to about AVR 12.x and anything higher than AVR 15.x.
