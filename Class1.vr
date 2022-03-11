@@ -48,7 +48,6 @@ BegClass MainPgm Access(*Public)
         DclFld UserDocsPath Type(*String) 
         DclFld DefaultPathRoot Type(*String) 
        
-        // c:\users\xxx\documents
         UserDocsPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)
         DefaultPathRoot = System.Configuration.ConfigurationManager.AppSettings['defaultOutputPath']
         TargetFolder = System.IO.Path.Combine(UserDocsPath, DefaultPathRoot, CmdLine.OutputPath) 
